@@ -1,0 +1,30 @@
+architecture:
+  version: 0.3
+  subtree:
+    - name: system
+      attributes:
+        technology: 40nm
+      local:
+        - name: L2
+          class: regfile
+          attributes:
+            depth: 65536
+            width: 8
+            block-size: 1
+            word-bits: 8
+      subtree:
+        - name: PE[0..1023]
+          local:
+            - name: Buffer
+              class: regfile
+              attributes:
+                depth: 256
+                width: 8
+                block-size: 1
+                word-bits: 8
+                meshX: 32
+            - name: MACC
+              class: intmac
+              attributes:
+                datawidth: 8
+                meshX: 32
