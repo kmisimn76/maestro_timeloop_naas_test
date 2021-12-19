@@ -8,11 +8,11 @@ Network MyTest {
 		Dataflow {
 			TemporalMap(1,1) N;
 			SpatialMap(1,1) K;
+			TemporalMap(3,3) R;
+			TemporalMap(3,3) S;
 			Cluster(32, P);
 			TemporalMap(1,1) Y;
 			TemporalMap(1,1) X;	
-			TemporalMap(3,3) R;
-			TemporalMap(3,3) S;
 			SpatialMap(1,1) C;
 		}
 	}

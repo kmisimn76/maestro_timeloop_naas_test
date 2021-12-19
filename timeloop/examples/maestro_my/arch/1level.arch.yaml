@@ -9,7 +9,8 @@ architecture:
           class: regfile
           attributes:
             #depth: 65536
-            depth: 1671424
+            #depth: 1671424
+            depth: 1671424000
             #width: 8
             width: 32
             block-size: 1
@@ -22,7 +23,8 @@ architecture:
               class: regfile
               attributes:
                 #depth: 256
-                depth: 25089
+                #depth: 25089
+                depth: 25089000
                 #width: 8
                 width: 32
                 block-size: 1
