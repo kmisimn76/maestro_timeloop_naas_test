@@ -4,15 +4,15 @@ Network MyTest {
 	Layer conv {
 		Type: CONV
 		Stride { X: 1, Y: 1 }
-		Dimensions { K: 32, C: 32, R: 3, S: 3, Y:7, X:7 }
+		Dimensions { N:1, K: 64, C: 64, R: 3, S: 3, Y:112, X:112 }
 		Dataflow {
-			TemporalMap(8,8) K;
-			TemporalMap(Sz(R),Sz(R)) R;
-			TemporalMap(Sz(S),Sz(S)) S;
-			TemporalMap(Sz(Y),1) Y;
-			TemporalMap(Sz(X),1) X;	
+			TemporalMap(1,1) N;
 			SpatialMap(1,1) K;
-			Cluster(8, P);
+			Cluster(32, P);
+			TemporalMap(1,1) Y;
+			TemporalMap(1,1) X;	
+			TemporalMap(3,3) R;
+			TemporalMap(3,3) S;
 			SpatialMap(1,1) C;
 		}
 	}

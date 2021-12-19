@@ -1,7 +1,7 @@
 mapping:
   - target: L2
     type: temporal
-    factors: C=1 M=1 R=3 S=3 N=1 P=1 Q=1
+    factors: C=2 M=2 R=3 S=3 N=1 P=1 Q=1
     permutation: SRQPCMN
   - target: L2
     type: spatial
@@ -9,5 +9,5 @@ mapping:
     permutation: SRQPCMN
   - target: Buffer
     type: temporal
-    factors: C=1 M=1 R=1 S=1 N=1 P=7 Q=7
+    factors: C=1 M=1 R=1 S=1 N=1 P=112 Q=112
     permutation: SRQPCMN

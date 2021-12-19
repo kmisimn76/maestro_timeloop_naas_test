@@ -8,23 +8,31 @@ architecture:
         - name: L2
           class: regfile
           attributes:
-            depth: 65536
-            width: 8
+            #depth: 65536
+            depth: 1671424
+            #width: 8
+            width: 32
             block-size: 1
-            word-bits: 8
+            #word-bits: 8
+            word-bits: 32
       subtree:
         - name: PE[0..1023]
           local:
             - name: Buffer
               class: regfile
               attributes:
-                depth: 256
-                width: 8
+                #depth: 256
+                depth: 25089
+                #width: 8
+                width: 32
                 block-size: 1
-                word-bits: 8
+                #word-bits: 8
+                word-bits: 32
                 meshX: 32
             - name: MACC
-              class: intmac
+              #class: intmac
+              class: mac
               attributes:
-                datawidth: 8
+                #datawidth: 8
+                datawidth: 32
                 meshX: 32
