@@ -1,3 +1,4 @@
+
 problem:
   instance:
     C: 64
@@ -5,8 +6,8 @@ problem:
     Hstride: 1
     M: 64
     N: 1
-    P: 112
-    Q: 112
+    P: 7
+    Q: 7
     R: 3
     S: 3
     Wdilation: 1

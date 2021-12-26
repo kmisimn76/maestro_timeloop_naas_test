@@ -1,13 +1,60 @@
+
 mapping:
+  - target: dummy
+    type: bypass
+    keep:
+    - Inputs
+    bypass:
+    - Outputs
+    - Weights
+  - target: InputBuffer
+    type: bypass
+    keep:
+    - Inputs
+    bypass:
+    - Outputs
+    - Weights
+  - target: WeightBuffer
+    type: bypass
+    keep:
+    - Weights
+    bypass:
+    - Inputs
+    - Outputs
+  - target: OutputBuffer
+    type: bypass
+    keep:
+    - Outputs
+    bypass:
+    - Inputs
+    - Weights
   - target: L2
     type: temporal
     factors: C=2 M=2 R=3 S=3 N=1 P=1 Q=1
     permutation: SRQPCMN
   - target: L2
     type: spatial
-    factors: C=32 M=32 R=1 S=1 N=1 P=1 Q=1
-    permutation: SRQPCMN
-  - target: Buffer
+    factors: C=32 M=1 R=1 S=1 N=1 P=1 Q=1
+    permutation: CMSRQPN
+    split: 1
+  - target: dummy
     type: temporal
-    factors: C=1 M=1 R=1 S=1 N=1 P=112 Q=112
+    factors: C=1 M=1 R=1 S=1 N=1 P=1 Q=1
+    permutation: SRQPCMN
+  - target: dummy
+    type: spatial
+    factors: C=1 M=32 R=1 S=1 N=1 P=1 Q=1
+    permutation: CMSRQPN
+    split: 1
+  - target: InputBuffer
+    type: temporal
+    factors: C=1 M=1 R=1 S=1 N=1 P=7 Q=7
+    permutation: SRQPCMN
+  - target: WeightBuffer
+    type: temporal
+    factors: C=1 M=1 R=1 S=1 N=1 P=1 Q=1
+    permutation: SRQPCMN
+  - target: OutputBuffer
+    type: temporal
+    factors: C=1 M=1 R=1 S=1 N=1 P=1 Q=1
     permutation: SRQPCMN

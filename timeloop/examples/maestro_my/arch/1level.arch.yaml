@@ -17,24 +17,61 @@ architecture:
             #word-bits: 8
             word-bits: 32
       subtree:
-        - name: PE[0..1023]
+        - name: row[0..31]
           local:
-            - name: Buffer
-              class: regfile
-              attributes:
-                #depth: 256
-                #depth: 25089
-                depth: 25089000
-                #width: 8
-                width: 32
-                block-size: 1
-                #word-bits: 8
-                word-bits: 32
-                meshX: 32
-            - name: MACC
-              #class: intmac
-              class: mac
-              attributes:
-                #datawidth: 8
-                datawidth: 32
-                meshX: 32
+          - name: dummy
+            class: regfile
+            attributes:
+              depth: 49
+              width: 32
+              block-size: 1
+              word-bits: 32
+              read-bandwidth: 1
+              write-bandwidth: 1
+          subtree:
+            - name: PE[0..31]
+
+              local:
+                - name: InputBuffer
+                  class: regfile
+                  attributes:
+                    #depth: 256
+                    #depth: 25089
+                    depth: 25089000
+                    #width: 8
+                    width: 32
+                    block-size: 1
+                    #word-bits: 8
+                    word-bits: 32
+                    #meshX: 32
+                - name: WeightBuffer
+                  class: regfile
+                  attributes:
+                    #depth: 256
+                    #depth: 25089
+                    depth: 25089000
+                    #width: 8
+                    width: 32
+                    block-size: 1
+                    #word-bits: 8
+                    word-bits: 32
+                    #meshX: 32
+                - name: OutputBuffer
+                  class: regfile
+                  attributes:
+                    #depth: 256
+                    #depth: 25089
+                    depth: 25089000
+                    #width: 8
+                    width: 32
+                    block-size: 1
+                    #word-bits: 8
+                    word-bits: 32
+                    #meshX: 32
+                - name: MACC
+                  #class: intmac
+                  class: mac
+                  attributes:
+                    #datawidth: 8
+                    datawidth: 32
+                    #meshX: 32

@@ -4,7 +4,7 @@ Network MyTest {
 	Layer conv {
 		Type: CONV
 		Stride { X: 1, Y: 1 }
-		Dimensions { N:1, K: 64, C: 64, R: 3, S: 3, Y:112, X:112 }
+		Dimensions { N:1, K: 64, C: 64, R: 3, S: 3, Y:7, X:7 }
 		Dataflow {
 			TemporalMap(1,1) N;
 			SpatialMap(1,1) K;
