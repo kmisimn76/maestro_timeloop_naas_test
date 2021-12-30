@@ -1,77 +1,48 @@
 architecture:
   version: 0.3
   subtree:
-    - name: system
-      attributes:
-        technology: 40nm
-      local:
-        - name: L2
-          class: regfile
-          attributes:
-            #depth: 65536
-            #depth: 1671424
-            depth: 1671424000
-            #width: 8
-            width: 32
-            block-size: 1
-            #word-bits: 8
-            word-bits: 32
-      subtree:
-        - name: row[0..31]
-          local:
-          - name: dummy
+  - name: system
+    local:
+      - name: DRAM
+        class: DRAM
+        attributes:
+          type: LPDDR4 #->Mobile??
+          width: 64
+          block-size: 4
+          word-bits: 16
+    subtree:
+      - name: sysarr
+        attributes:
+          technology: 40nm
+        local:
+          - name: L2
             class: regfile
             attributes:
-              depth: 49
+              #depth: 65536
+              depth: 1671424
+              #width: 8
               width: 32
               block-size: 1
+              #word-bits: 8
               word-bits: 32
-              read-bandwidth: 1
-              write-bandwidth: 1
-          subtree:
-            - name: PE[0..31]
-
-              local:
-                - name: InputBuffer
-                  class: regfile
-                  attributes:
-                    #depth: 256
-                    #depth: 25089
-                    depth: 25089000
-                    #width: 8
-                    width: 32
-                    block-size: 1
-                    #word-bits: 8
-                    word-bits: 32
-                    #meshX: 32
-                - name: WeightBuffer
-                  class: regfile
-                  attributes:
-                    #depth: 256
-                    #depth: 25089
-                    depth: 25089000
-                    #width: 8
-                    width: 32
-                    block-size: 1
-                    #word-bits: 8
-                    word-bits: 32
-                    #meshX: 32
-                - name: OutputBuffer
-                  class: regfile
-                  attributes:
-                    #depth: 256
-                    #depth: 25089
-                    depth: 25089000
-                    #width: 8
-                    width: 32
-                    block-size: 1
-                    #word-bits: 8
-                    word-bits: 32
-                    #meshX: 32
-                - name: MACC
-                  #class: intmac
-                  class: mac
-                  attributes:
-                    #datawidth: 8
-                    datawidth: 32
-                    #meshX: 32
+        subtree:
+          - name: PE[0..1023]
+            local:
+              - name: Buffer
+                class: regfile
+                attributes:
+                  #depth: 256
+                  depth: 25089
+                  #width: 8
+                  width: 32
+                  block-size: 1
+                  #word-bits: 8
+                  word-bits: 32
+                  meshX: 32
+              - name: MACC
+                #class: intmac
+                class: mac
+                attributes:
+                  #datawidth: 8
+                  datawidth: 32
+                  meshX: 32

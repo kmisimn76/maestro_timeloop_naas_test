@@ -92,6 +92,23 @@ class MAESTRO_DATAFLOW:
         self.mapping.append(["Spatial", var, 1, 1])
     def push_cluster(self, size):
         self.mapping.append(["Cluster", DIM.P, size, size])
+class TIMELOOP_MAPPING:
+    def __init__(self):
+        self.mapping = []
+    def length(self):
+        return len(self.mapping)
+    def read_line(self, i):
+        return self.mapping[i][0], DIM.to_str(self.mapping[i][1]), self.mapping[i][2], self.mapping[i][3]
+    def push_temporal_outer(self, var, size):
+        self.mapping.append(["Temporal", var, size, size])
+    def push_spatial_outer(self, var, size):
+        self.mapping.append(["Spatial", var, size, size])
+    def push_temporal_inner(self, var):
+        self.mapping.append(["Temporal", var, 1, 1])
+    def push_spatial_inner(self, var):
+        self.mapping.append(["Spatial", var, 1, 1])
+    def push_cluster(self, size):
+        self.mapping.append(["Cluster", DIM.P, size, size])
 
 class MyBounds(object, ):
     def __init__(self,length):
@@ -730,6 +747,47 @@ class MaestroEnvironment(object):
         total_constraint = constraint
         #print("estiated: ", total_reward,total_constraint)
         return total_reward, total_constraint
+    
+    ############## ----------------------- ###################
+    ############## ----------------------- ###################
+    # MAESTRO perform estimation
+    ############## ----------------------- ###################
+    ############## ----------------------- ###################
+    def gene2dataflow(self, dimension, hw_gene, map_gene):
+        dataflow = MAESTRO_DATAFLOW()
+        size_hw_dim_0 = int(hw_gene[HW_GENE.DIM_SIZE_0])
+        size_hw_dim_1 = int(hw_gene[HW_GENE.DIM_SIZE_1])
+        size_hw_dim_2 = int(hw_gene[HW_GENE.DIM_SIZE_2])
+        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
+        sorted_arr_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.ARR_LOOP_ORDER_K:MAPPING_GENE.ARR_LOOP_ORDER_S+1])), key=lambda x:x[1])
+        sorted_pe_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
+
+        dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
+        tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])]
+        #FIXME!
+        tile_size[4] = dimension[4]
+        #FIXME!
+        tile_size[5] = dimension[5]
+        #FIXME!
+        in_tile_size = [1, 1, 1, 1, dimension[4], dimension[5]]
+        #FIXME!
+        #print("Dim size: ", dim_size, (hw_gene[HW_GENE.NUM_PE]))
+        #print("Tile size: ", tile_size, map_gene[0:6], dimension[0:6], sorted_arr_map_dim)
+
+        first_hw_dim = [idx for idx, item in sorted_arr_map_dim].index(selected_hw_dim[0][0]) #First hw dim
+        for i in range(6):
+            if i is not first_hw_dim: dataflow.push_temporal_outer(sorted_arr_map_dim[i][0], tile_size[sorted_arr_map_dim[i][0]])
+        #dataflow.push_spatial_outer(selected_hw_dim[0][0], hw_gene[HW_GENE.DIM_SIZE_0])
+        dataflow.push_spatial_inner(selected_hw_dim[0][0])
+        #dataflow.push_cluster(dim_size[0]) #dim 0 is implied by #PE/dim1
+        dataflow.push_cluster(dim_size[1])
+        second_hw_dim = [idx for idx, item in sorted_pe_map_dim].index(selected_hw_dim[1][0]) #First hw dim
+        for i in range(6):
+            if i is not second_hw_dim: dataflow.push_temporal_outer(sorted_pe_map_dim[i][0], in_tile_size[sorted_pe_map_dim[i][0]])
+            #if i is not second_hw_dim: dataflow.push_temporal_inner(sorted_pe_map_dim[i][0])
+        dataflow.push_spatial_inner(selected_hw_dim[1][0])
+        #dataflow.push_cluster(dim_size[1])
+        return dataflow
         
     def write_maestro_dataflow(self, dimension, dataflow, m_file=None, layer_id=0):
         if len(dimension) > 6:
@@ -769,42 +827,6 @@ class MaestroEnvironment(object):
         sum_exp_a = np.sum(exp_a)
         y = exp_a / sum_exp_a
         return y
-
-    def gene2dataflow(self, dimension, hw_gene, map_gene):
-        dataflow = MAESTRO_DATAFLOW()
-        size_hw_dim_0 = int(hw_gene[HW_GENE.DIM_SIZE_0])
-        size_hw_dim_1 = int(hw_gene[HW_GENE.DIM_SIZE_1])
-        size_hw_dim_2 = int(hw_gene[HW_GENE.DIM_SIZE_2])
-        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
-        sorted_arr_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.ARR_LOOP_ORDER_K:MAPPING_GENE.ARR_LOOP_ORDER_S+1])), key=lambda x:x[1])
-        sorted_pe_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
-
-        dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
-        tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])]
-        #FIXME!
-        tile_size[4] = dimension[4]
-        #FIXME!
-        tile_size[5] = dimension[5]
-        #FIXME!
-        in_tile_size = [1, 1, 1, 1, dimension[4], dimension[5]]
-        #FIXME!
-        #print("Dim size: ", dim_size, (hw_gene[HW_GENE.NUM_PE]))
-        #print("Tile size: ", tile_size, map_gene[0:6], dimension[0:6], sorted_arr_map_dim)
-
-        first_hw_dim = [idx for idx, item in sorted_arr_map_dim].index(selected_hw_dim[0][0]) #First hw dim
-        for i in range(6):
-            if i is not first_hw_dim: dataflow.push_temporal_outer(sorted_arr_map_dim[i][0], tile_size[sorted_arr_map_dim[i][0]])
-        #dataflow.push_spatial_outer(selected_hw_dim[0][0], hw_gene[HW_GENE.DIM_SIZE_0])
-        dataflow.push_spatial_inner(selected_hw_dim[0][0])
-        #dataflow.push_cluster(dim_size[0]) #dim 0 is implied by #PE/dim1
-        dataflow.push_cluster(dim_size[1])
-        second_hw_dim = [idx for idx, item in sorted_pe_map_dim].index(selected_hw_dim[1][0]) #First hw dim
-        for i in range(6):
-            if i is not second_hw_dim: dataflow.push_temporal_outer(sorted_pe_map_dim[i][0], in_tile_size[sorted_pe_map_dim[i][0]])
-            #if i is not second_hw_dim: dataflow.push_temporal_inner(sorted_pe_map_dim[i][0])
-        dataflow.push_spatial_inner(selected_hw_dim[1][0])
-        #dataflow.push_cluster(dim_size[1])
-        return dataflow
         
     #def oberserve_maestro(self, state, firsttime=False):
     def oberserve_maestro(self, dimension, hw_gene, map_gene, firsttime=False, multi=False):
@@ -910,3 +932,153 @@ class MaestroEnvironment(object):
                         fo.write(fdpt.read())
                     fo.write("}\n")
                     fo.write("}")
+
+
+    ############## ----------------------- ###################
+    ############## ----------------------- ###################
+    # Timeloop Perform Estimation
+    ############## ----------------------- ###################
+    ############## ----------------------- ###################
+    def gene2mapping(self, dimension, hw_gene, map_gene):
+        dataflow = MAESTRO_DATAFLOW()
+        size_hw_dim_0 = int(hw_gene[HW_GENE.DIM_SIZE_0])
+        size_hw_dim_1 = int(hw_gene[HW_GENE.DIM_SIZE_1])
+        size_hw_dim_2 = int(hw_gene[HW_GENE.DIM_SIZE_2])
+        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
+        sorted_arr_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.ARR_LOOP_ORDER_K:MAPPING_GENE.ARR_LOOP_ORDER_S+1])), key=lambda x:x[1])
+        sorted_pe_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
+
+        dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
+        tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])]
+        #FIXME!
+        tile_size[4] = dimension[4]
+        #FIXME!
+        tile_size[5] = dimension[5]
+        #FIXME!
+        in_tile_size = [1, 1, 1, 1, dimension[4], dimension[5]]
+        #FIXME!
+        #print("Dim size: ", dim_size, (hw_gene[HW_GENE.NUM_PE]))
+        #print("Tile size: ", tile_size, map_gene[0:6], dimension[0:6], sorted_arr_map_dim)
+
+        first_hw_dim = [idx for idx, item in sorted_arr_map_dim].index(selected_hw_dim[0][0]) #First hw dim
+        for i in range(6):
+            if i is not first_hw_dim: dataflow.push_temporal_outer(sorted_arr_map_dim[i][0], tile_size[sorted_arr_map_dim[i][0]])
+        #dataflow.push_spatial_outer(selected_hw_dim[0][0], hw_gene[HW_GENE.DIM_SIZE_0])
+        dataflow.push_spatial_inner(selected_hw_dim[0][0])
+        #dataflow.push_cluster(dim_size[0]) #dim 0 is implied by #PE/dim1
+        dataflow.push_cluster(dim_size[1])
+        second_hw_dim = [idx for idx, item in sorted_pe_map_dim].index(selected_hw_dim[1][0]) #First hw dim
+        for i in range(6):
+            if i is not second_hw_dim: dataflow.push_temporal_outer(sorted_pe_map_dim[i][0], in_tile_size[sorted_pe_map_dim[i][0]])
+            #if i is not second_hw_dim: dataflow.push_temporal_inner(sorted_pe_map_dim[i][0])
+        dataflow.push_spatial_inner(selected_hw_dim[1][0])
+        #dataflow.push_cluster(dim_size[1])
+        return dataflow
+
+    def write_timeloop_dataflow(self, dimension, dataflow, m_file=None, layer_id=0):
+        if len(dimension) > 6:
+            m_type = m_type_dicts[int(dimension[-1])]
+        else:
+            m_type = "CONV"
+        # Dataflow description
+        with open("../../data/dataflow/dpt.m", "r") as fdpt:
+            fo = open("{}.m".format(m_file), "w")
+            fo.write("Network {} {{\n".format(layer_id))
+            fo.write("Layer {} {{\n".format(m_type))
+            fo.write("Type: {}\n".format(m_type))
+            fo.write(
+                "Dimensions {{ K: {:.0f}, C: {:.0f}, Y: {:.0f}, X: {:.0f}, R: {:.0f}, S: {:.0f} }}\n".format(
+                    *dimension))
+            if m_type == "CONV":
+                fo.write("Dataflow {\n")
+                for ln in range(dataflow.length()):
+                    [df_type, df_var, df_size1, df_size2] = dataflow.read_line(ln)
+                    if df_type == "Temporal" or df_type == "Spatial":
+                        fo.write("{}Map({},{}) {};\n".format(df_type,df_size1,df_size2,df_var))
+                    elif df_type == "Cluster":
+                        fo.write("{}({},{});\n".format(df_type,df_size1,df_var))
+                    else:
+                        print(df_type)
+                        raise "Exception Type"
+                fo.write("}\n")
+            else:
+                fdpt.seek(0)
+                fo.write(fdpt.read())
+            fo.write("}\n")
+            fo.write("}")
+            fo.close()
+
+    def oberserve_timeloop(self, dimension, hw_gene, map_gene, firsttime=False, multi=False):
+        if multi==True:
+            if (len(dimension) != len(hw_gene)) or (len(dimension) != len(map_gene)):
+                raise "Invalid Argument"
+            lim = len(dimension)
+        else:
+            lim = 1
+            dimension = [dimension]
+            hw_gene = [hw_gene]
+            map_gene = [map_gene]
+        process = []
+        main_m_file = self.random_file_name
+        for i in range(lim):
+            m_file = main_m_file+"{}".format(i)
+            self.write_maestro_dataflow (dimension[i], self.gene2dataflow(dimension[i], hw_gene[i], map_gene[i]), m_file=m_file)
+
+            #HW gene
+            num_pes = hw_gene[i][2]
+            l1_size_cstr = hw_gene[i][1]
+            l2_size_cstr = hw_gene[i][0]
+            noc_bw_cstr = hw_gene[i][3]
+            dim_size = [int(hw_gene[i][HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[i][HW_GENE.DIM_SIZE_0], hw_gene[i][HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector)
+            os.remove("./{}.csv".format(m_file)) if os.path.exists("./{}.csv".format(m_file)) else None
+            command = [self._executable,
+                    "--Mapping_file={}.m".format(m_file),
+                    "--full_buffer=false",
+                    "--noc_bw_cstr={}".format(int(noc_bw_cstr)),
+                    "--noc_hops=1",
+                    "--noc_hop_latency=1",
+                    "--noc_mc_support=true",
+                    #"--num_pes={}".format(int(num_pes)),
+                    "--num_pes={}".format(int(dim_size[0]*dim_size[1])),
+                    #"--num_simd_lanes=1",
+                    "--l1_size_cstr={}".format(int(l1_size_cstr)),
+                    "--l2_size_cstr={}".format(int(l2_size_cstr)),
+                    "--print_res=false", "--print_res_csv_file=true", "--print_log_file=false", "--print_design_space=false", "--msg_print_lv=0"]
+
+            process.append(Popen(command, stdout=PIPE, stderr=PIPE))
+        for i in range(lim):
+            stdout, stderr = process[i].communicate()
+            process[i].wait()
+
+        #print(command, stdout, self.gene2dataflow(dimension, hw_gene, map_gene).mapping)
+        try:
+            df = pd.read_csv("./{}.csv".format(m_file))
+            layer_name = df[" Layer Number"]
+            runtime = np.array(df[" Runtime (Cycles)"]).reshape(-1, 1)
+            throughput = np.array(df[" Throughput (MACs/Cycle)"]).reshape(-1, 1)
+            energy = np.array(df[" Activity count-based Energy (nJ)"]).reshape(-1, 1)
+            area = np.array(df[" Area"]).reshape(-1, 1)
+            power = np.array(df[" Power"]).reshape(-1, 1)
+            l1_size = np.array(df[" L1 SRAM Size Req (Bytes)"]).reshape(-1, 1)
+            l2_size = np.array(df["  L2 SRAM Size Req (Bytes)"]).reshape(-1, 1)
+            mac = np.array(df[" Num MACs"]).reshape(-1, 1)
+            os.remove("./{}.csv".format(m_file))  if os.path.exists("./{}.csv".format(m_file)) else None
+            os.remove("./log.txt") if os.path.exists("./log.txt") else None
+            #with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+            #    print(df)
+            #print(hw_gene[0], map_gene[0], stdout)
+            #print(type(int(runtime[0][0])))
+            if runtime[0][0] <= 0 or energy[0][0] <= 0 or throughput[0][0] <= 0:
+                #print(runtime[0][0])
+                #print(energy[0][0])
+                #print(throughput[0][0])
+                raise
+            self.observation = [np.mean(x) for x in [runtime, throughput, energy, area, l1_size, l2_size, mac, power]]
+            #print("pass")
+            return self.judge()
+        except:
+            # Compile Error -> Constraint(panelty)
+            #print("+"*20)
+            #print(num_pe, KTileSz, ClusterSz)
+            #print("+" * 20)
+            return None, None
