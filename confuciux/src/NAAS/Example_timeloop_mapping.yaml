@@ -1,17 +1,17 @@
 mapping:
   - target: DRAM
     type: temporal
-    factors: C=2 M=2 R=1 S=1 N=1 P=1 Q=1
+    factors: C=1 M=1 R=1 S=1 N=1 P=1 Q=1
     permutation: SRQPCMN
-  - target: L2
+  - target: L2_spad
     type: temporal
-    factors: C=2 M=2 R=3 S=3 N=1 P=1 Q=1
-    permultaion: SRQPCMN
-  - target: L2
+    factors: C=2 M=2 R=3 S=3 N=1 P=2 Q=2    # Varaible: C,M,R,S,P,Q
+    permutation: SRQPCMN                    # Variable Order
+  - target: L2_spad
     type: spatial
-    factors: C=32 M=32 R=1 S=1 N=1 P=1 Q=1
-    permultaion: SRQPCMN
+    factors: C=32 M=32 R=1 S=1 N=1 P=1 Q=1  # Varaible: spatial factors
+    permutation: SRQPCMN                    # Variable Order: spatial factor
   - target: Buffer
     type: temporal
-    factors: C=1 M=1 R=1 S=1 N=1 P=112 Q=112
-    permultaion: SRQPCMN
+    factors: C=1 M=1 R=1 S=1 N=1 P=56 Q=56  # Varaible: P, Q
+    permutation: SRQPCMN                    # Variable Order

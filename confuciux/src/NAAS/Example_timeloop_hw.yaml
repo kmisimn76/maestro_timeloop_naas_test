@@ -6,59 +6,33 @@ architecture:
       - name: DRAM
         class: DRAM
         attributes:
-          type: LPDDR4 # Mobile?
+          type: LPDDR4
           width: 64
           block-size: 4
           word-bits: 16
     subtree:
-      - name: chip
+      - name: sysarr
         attributes:
           techology: 40nm
         local:
           - name: L2_spad
             class: regfile
             attributes:
-              depth: 1671424
-              width: 32
-              block-size: 1
-          - name: dummyX[0..31]
-            class: regfile
-            attributes:
-              depth: 1671424
-              width: 32
-              block-size: 1
-          - name: dummyY[0..31]
-            class: regfile
-            attributes:
-              depth: 1671424
+              depth: 1671424000 # Variable
               width: 32
               block-size: 1
         subtree:
-          - name: PE[0...1023]
+          - name: PE[0..1023] # Variable
             local:
-              - name: InputBuffer
+              - name: Buffer
                 class: regfile
                 attributes:
-                  depth: 25089
+                  depth: 250890000 # Variable
                   width: 32
                   block-size: 1
-                  meshX:32
-              - name: WeightBuffer
-                class: regfile
-                attributes:
-                  depth: 25089
-                  width: 32
-                  block-size: 1
-                  meshX:32
-              - name: OutputBuffer
-                class: regfile
-                attributes:
-                  depth: 25089
-                  width: 32
-                  block-size: 1
-                  meshX:32
+                  meshX: 32 # Variable
               - name: MACC
                 class: mac
                 attributes:
                   datawidth: 32
-                  meshX: 32
+                  meshX: 32 # Variable

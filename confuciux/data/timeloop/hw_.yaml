@@ -1,0 +1,38 @@
+architecture:
+  subtree:
+  - local:
+    - attributes:
+        block-size: 4
+        type: LPDDR4
+        width: 64
+        word-bits: 16
+      class: DRAM
+      name: DRAM
+    name: system
+    subtree:
+    - attributes:
+        techology: 40nm
+      local:
+      - attributes:
+          block-size: 1
+          depth: 1671424000
+          width: 32
+        class: regfile
+        name: L2_spad
+      name: sysarr
+      subtree:
+      - local:
+        - attributes:
+            block-size: 1
+            depth: 250890000
+            meshX: 6
+            width: 32
+          class: regfile
+          name: Buffer
+        - attributes:
+            datawidth: 32
+            meshX: 6
+          class: mac
+          name: MACC
+        name: PE[0..209]
+  version: 0.3

@@ -13,6 +13,13 @@ from tqdm import tqdm
 from bayes_opt import BayesianOptimization
 from scipy import optimize
 
+def softmax(a) :
+    exp_a = np.exp(a)
+    sum_exp_a = np.sum(exp_a)
+    y = exp_a / sum_exp_a
+    return y
+
+use_maestro = False
 
 action_space, action_bound, action_bottom = get_action_space()
 action_space = [act * bound for act, bound in zip(action_space, action_bound)]
@@ -39,18 +46,18 @@ class HW_GENE (IntEnum):
     PAR_DIM_R   = 12
     PAR_DIM_S   = 13
 class MAPPING_GENE (IntEnum):
-    ARR_TILE_SIZE_K  = 6
-    ARR_TILE_SIZE_C  = 7
-    ARR_TILE_SIZE_Y  = 8
-    ARR_TILE_SIZE_X  = 9
-    ARR_TILE_SIZE_R  = 10
-    ARR_TILE_SIZE_S  = 11
     ARR_LOOP_ORDER_K = 0
     ARR_LOOP_ORDER_C = 1
     ARR_LOOP_ORDER_Y = 2
     ARR_LOOP_ORDER_X = 3
     ARR_LOOP_ORDER_R = 4
     ARR_LOOP_ORDER_S = 5
+    ARR_TILE_SIZE_K  = 6
+    ARR_TILE_SIZE_C  = 7
+    ARR_TILE_SIZE_Y  = 8
+    ARR_TILE_SIZE_X  = 9
+    ARR_TILE_SIZE_R  = 10
+    ARR_TILE_SIZE_S  = 11
     PE_LOOP_ORDER_K  = 12
     PE_LOOP_ORDER_C  = 13
     PE_LOOP_ORDER_Y  = 14
@@ -73,7 +80,17 @@ class DIM (IntEnum):
         if data==DIM.R: return "R"
         if data==DIM.S: return "S"
         if data==DIM.P: return "P"
-        print(data)
+        #print(data)
+        raise "Exception"
+    def to_str_timeloop(data):
+        if data==DIM.K: return "M"
+        if data==DIM.C: return "C"
+        if data==DIM.Y: return "Q"
+        if data==DIM.X: return "P"
+        if data==DIM.R: return "R"
+        if data==DIM.S: return "S"
+        if data==DIM.P: return "Z"
+        #print(data)
         raise "Exception"
 class MAESTRO_DATAFLOW:
     def __init__(self):
@@ -92,23 +109,74 @@ class MAESTRO_DATAFLOW:
         self.mapping.append(["Spatial", var, 1, 1])
     def push_cluster(self, size):
         self.mapping.append(["Cluster", DIM.P, size, size])
+class TIMELOOP_HW:
+    def __init__(self):
+        self.X = 0
+        self.Y = 0
+        self.XDim = DIM.X
+        self.YDim = DIM.Y
+        self.L2_size = 0
+        self.L1_size = 0
+    def set_HW(self,x,y,xdim, ydim, l2_size,l1_size):
+        self.X = x
+        self.Y = y
+        self.XDim = xdim
+        self.YDim = ydim
+        self.L2_size = l2_size
+        self.L1_size = l1_size
+    def get_X(self):
+        return self.X
+    def get_Y(self):
+        return self.Y
+    def get_XDim(self):
+        return self.XDim
+    def get_YDim(self):
+        return self.YDim
+    def get_L2_size(self):
+        return self.L2_size
+    def get_L1_size(self):
+        return self.L1_size
 class TIMELOOP_MAPPING:
     def __init__(self):
-        self.mapping = []
-    def length(self):
-        return len(self.mapping)
-    def read_line(self, i):
-        return self.mapping[i][0], DIM.to_str(self.mapping[i][1]), self.mapping[i][2], self.mapping[i][3]
-    def push_temporal_outer(self, var, size):
-        self.mapping.append(["Temporal", var, size, size])
-    def push_spatial_outer(self, var, size):
-        self.mapping.append(["Spatial", var, size, size])
-    def push_temporal_inner(self, var):
-        self.mapping.append(["Temporal", var, 1, 1])
-    def push_spatial_inner(self, var):
-        self.mapping.append(["Spatial", var, 1, 1])
-    def push_cluster(self, size):
-        self.mapping.append(["Cluster", DIM.P, size, size])
+        self.mapping_gene_raw = None
+        self.l_info = None # layer information : K C Y X R S
+        self.mapping_tile_size = None
+        self.mapping_array_order = None
+        self.mapping_pe_order = None
+    def set_mapping_gene(self, l_info, dim_sz, hw_gene, gene):
+        self.mapping_gene_raw = gene
+        self.l_info = l_info
+        self.mapping_tile_size = [int(self.mapping_gene_raw[i]*self.l_info[j])+1 for (i, j) in zip(range(MAPPING_GENE.ARR_TILE_SIZE_K, MAPPING_GENE.ARR_TILE_SIZE_S+1), range(0,6))]
+        self.dim_size = dim_sz
+        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
+        sorted_arr_map_dim = sorted(list(enumerate(self.mapping_gene_raw[MAPPING_GENE.ARR_LOOP_ORDER_K:MAPPING_GENE.ARR_LOOP_ORDER_S+1])), key=lambda x:x[1])
+        sorted_pe_map_dim = sorted(list(enumerate(self.mapping_gene_raw[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
+        self.mapping_array_order = [sorted_arr_map_dim[i][0] for i in range(0,6)]
+        self.mapping_pe_order = [sorted_pe_map_dim[i][0] for i in range(0,6)]
+        self.mapping_selected_hw_dim = [selected_hw_dim[0][0], selected_hw_dim[1][0]]
+        #print("Mapping size: ", self.mapping_gene_raw[MAPPING_GENE.ARR_TILE_SIZE_K: MAPPING_GENE.ARR_TILE_SIZE_S+1])
+        #print("Select Arr DIM: ", sorted_arr_map_dim)
+    def get_mapping_L2_tile_size(self):
+        output = [int(self.l_info[i]/self.mapping_tile_size[i])+1 for i in range(0,6)]
+        output[self.mapping_selected_hw_dim[0]] = 1
+        output[self.mapping_selected_hw_dim[1]] = 1
+        return output
+    def get_mapping_L1_tile_size(self):
+        output = [self.mapping_tile_size[i] for i in range(0,6)]
+        #output[self.mapping_selected_hw_dim[0]] = int(output[self.mapping_selected_hw_dim[0]]/self.dim_size[0]) +1 # Error
+        #output[self.mapping_selected_hw_dim[1]] = int(output[self.mapping_selected_hw_dim[1]]/self.dim_size[1]) +1 # Error
+        output[self.mapping_selected_hw_dim[0]] = int(self.l_info[self.mapping_selected_hw_dim[0]]/self.dim_size[0]) +1
+        output[self.mapping_selected_hw_dim[1]] = int(self.l_info[self.mapping_selected_hw_dim[1]]/self.dim_size[1]) +1
+        return output
+    def get_mapping_parallel_size(self):
+        output = [1 for i in range(0,6)]
+        output[self.mapping_selected_hw_dim[0]] = int(self.dim_size[0])
+        output[self.mapping_selected_hw_dim[1]] = int(self.dim_size[1])
+        return output
+    def get_mapping_array_order(self):
+        return [self.mapping_array_order[i] for i in range(0,6)]
+    def get_mapping_pe_order(self):
+        return [self.mapping_pe_order[i] for i in range(0,6)]
 
 class MyBounds(object, ):
     def __init__(self,length):
@@ -216,8 +284,7 @@ HWGene = _HWGene()
 
 class _MapGene(object):
     def get_sample_gene(self):
-        return [0.25, 0.25, 0.25, 0.25, 0.25, 0.25,
-                6,5,4,3,2,1, 6,5,4,3,2,1]
+        return [6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 6,5,4,3,2,1]
     def generate_random_gene(self):
         #ArrTileSizeK = random.randint(1,min(16, self.model_defs[i][0]))
         #ArrTileSizeC = random.randint(1,min(16, self.model_defs[i][1]))
@@ -244,8 +311,8 @@ class _MapGene(object):
         PELoopOrderR = random.randint(1, 6)
         PELoopOrderS = random.randint(1, 6)
         return [
-                    ArrTileSizeK,ArrTileSizeC,ArrTileSizeY,ArrTileSizeX,ArrTileSizeR,ArrTileSizeS,
                     ArrLoopOrderK,ArrLoopOrderC,ArrLoopOrderY,ArrLoopOrderX,ArrLoopOrderR,ArrLoopOrderS,
+                    ArrTileSizeK,ArrTileSizeC,ArrTileSizeY,ArrTileSizeX,ArrTileSizeR,ArrTileSizeS,
                     PELoopOrderK,PELoopOrderC,PELoopOrderY,PELoopOrderX,PELoopOrderR,PELoopOrderS
                 ]
 
@@ -436,11 +503,10 @@ class MaestroEnvironment(object):
 
 
     def genetic_search(self, epochs=100, chkpt_file="genetic_chkpt.plt",fd=None):
-
-        epochs = 30000 #hardcoded
-        num_pop = 30 #hardcoded
+        epochs = 100 #hardcoded
+        num_pop = 10 #hardcoded
         num_gen = epochs // num_pop
-        num_parents = 15 #hardcoded
+        num_parents = 5 #hardcoded
         self.fd = fd
         self.chkpt_file = chkpt_file
         self.start_range = start_range
@@ -491,6 +557,7 @@ class MaestroEnvironment(object):
         sample_hw_gene = np.array(HWGene.get_sample_gene(), dtype=float).copy()
         sample_map_gene = np.array(MapGene.get_sample_gene(), dtype=float).copy()
         #Initialize Valid Population
+        
         for count in tqdm(range(num_pop), desc="Initalize New Populations"):
             # PE Pop
             reward = None
@@ -498,14 +565,20 @@ class MaestroEnvironment(object):
             while reward==None and (constraint==None or constraint > self.constraint_value):
                 rand_gene = HWGene.generate_random_gene()
                 hw_new_population[count] = np.array(rand_gene, dtype=float).copy()
-                reward, constraint = self.oberserve_maestro(self.model_defs[0], hw_new_population[count], sample_map_gene)
+                if use_maestro is True:
+                    reward, constraint = self.oberserve_maestro(self.model_defs[0], hw_new_population[count], sample_map_gene)
+                else:
+                    reward, constraint = self.oberserve_timeloop(self.model_defs[0], hw_new_population[count], sample_map_gene)
             # Map Pop
             for i in range(num_layers):
                 reward = None
                 while reward==None:
                     rand_gene = MapGene.generate_random_gene()
                     map_new_population[i][count] = np.array(rand_gene, dtype=float).copy()
-                    reward, constraint = self.oberserve_maestro(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
+                    if use_maestro is True:
+                        reward, constraint = self.oberserve_maestro(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
+                    else:
+                        reward, constraint = self.oberserve_timeloop(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
 
             count += 1
         print("[SYSTEM] Generated intial {} population".format(num_pop))
@@ -739,7 +812,10 @@ class MaestroEnvironment(object):
         if table_entry in self.exp_table:
             reward, constraint = self.exp_table[table_entry]
         else:
-            reward, constraint = self.oberserve_maestro(layer_info, hw_gene, map_gene)
+            if use_maestro is True:
+                reward, constraint = self.oberserve_maestro(layer_info, hw_gene, map_gene)
+            else:
+                reward, constraint = self.oberserve_timeloop(layer_info, hw_gene, map_gene)
             self.exp_table[table_entry] = (reward, constraint)
         if reward == None:
             return None, None
@@ -763,7 +839,8 @@ class MaestroEnvironment(object):
         sorted_pe_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
 
         dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
-        tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])]
+        #tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])] # error?
+        tile_size = [int(x)+1 for x in np.array(map_gene[MAPPING_GENE.ARR_TILE_SIZE_K:MAPPING_GENE.ARR_TILE_SIZE_S+1]) * np.array(dimension[0:6])]
         #FIXME!
         tile_size[4] = dimension[4]
         #FIXME!
@@ -940,73 +1017,134 @@ class MaestroEnvironment(object):
     ############## ----------------------- ###################
     ############## ----------------------- ###################
     def gene2mapping(self, dimension, hw_gene, map_gene):
-        dataflow = MAESTRO_DATAFLOW()
-        size_hw_dim_0 = int(hw_gene[HW_GENE.DIM_SIZE_0])
-        size_hw_dim_1 = int(hw_gene[HW_GENE.DIM_SIZE_1])
-        size_hw_dim_2 = int(hw_gene[HW_GENE.DIM_SIZE_2])
         selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
-        sorted_arr_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.ARR_LOOP_ORDER_K:MAPPING_GENE.ARR_LOOP_ORDER_S+1])), key=lambda x:x[1])
-        sorted_pe_map_dim = sorted(list(enumerate(map_gene[MAPPING_GENE.PE_LOOP_ORDER_K:MAPPING_GENE.PE_LOOP_ORDER_S+1])), key=lambda x:x[1])
-
         dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
-        tile_size = [int(x)+1 for x in np.array(map_gene[0:6]) * np.array(dimension[0:6])]
-        #FIXME!
-        tile_size[4] = dimension[4]
-        #FIXME!
-        tile_size[5] = dimension[5]
-        #FIXME!
-        in_tile_size = [1, 1, 1, 1, dimension[4], dimension[5]]
-        #FIXME!
-        #print("Dim size: ", dim_size, (hw_gene[HW_GENE.NUM_PE]))
-        #print("Tile size: ", tile_size, map_gene[0:6], dimension[0:6], sorted_arr_map_dim)
+        hw_info = TIMELOOP_HW()
+        mapping = TIMELOOP_MAPPING()
+        hw_info.set_HW(dim_size[0], dim_size[1], selected_hw_dim[0][0], selected_hw_dim[1][0], hw_gene[HW_GENE.L2_SIZE], hw_gene[HW_GENE.L1_SIZE])
+        mapping.set_mapping_gene(dimension[0:6], dim_size, hw_gene, map_gene)
 
-        first_hw_dim = [idx for idx, item in sorted_arr_map_dim].index(selected_hw_dim[0][0]) #First hw dim
-        for i in range(6):
-            if i is not first_hw_dim: dataflow.push_temporal_outer(sorted_arr_map_dim[i][0], tile_size[sorted_arr_map_dim[i][0]])
+        #print("Dim size: ", hw_info.get_X(), hw_info.get_Y())
+        #print("Tile size: ", mapping.get_mapping_L2_tile_size(), "in", mapping.get_mapping_L1_tile_size())
+        #print("Tile order: ", mapping.get_mapping_array_order(), "and", mapping.get_mapping_pe_order())
+
+        #first_hw_dim = [idx for idx, item in sorted_arr_map_dim].index(selected_hw_dim[0][0]) #First hw dim
+        #for i in range(6):
+        #    if i is not first_hw_dim: dataflow.push_temporal_outer(sorted_arr_map_dim[i][0], tile_size[sorted_arr_map_dim[i][0]])
         #dataflow.push_spatial_outer(selected_hw_dim[0][0], hw_gene[HW_GENE.DIM_SIZE_0])
-        dataflow.push_spatial_inner(selected_hw_dim[0][0])
+        #dataflow.push_spatial_inner(selected_hw_dim[0][0])
         #dataflow.push_cluster(dim_size[0]) #dim 0 is implied by #PE/dim1
-        dataflow.push_cluster(dim_size[1])
-        second_hw_dim = [idx for idx, item in sorted_pe_map_dim].index(selected_hw_dim[1][0]) #First hw dim
-        for i in range(6):
-            if i is not second_hw_dim: dataflow.push_temporal_outer(sorted_pe_map_dim[i][0], in_tile_size[sorted_pe_map_dim[i][0]])
-            #if i is not second_hw_dim: dataflow.push_temporal_inner(sorted_pe_map_dim[i][0])
-        dataflow.push_spatial_inner(selected_hw_dim[1][0])
         #dataflow.push_cluster(dim_size[1])
-        return dataflow
+        #second_hw_dim = [idx for idx, item in sorted_pe_map_dim].index(selected_hw_dim[1][0]) #First hw dim
+        #for i in range(6):
+        #    if i is not second_hw_dim: dataflow.push_temporal_outer(sorted_pe_map_dim[i][0], in_tile_size[sorted_pe_map_dim[i][0]])
+            #if i is not second_hw_dim: dataflow.push_temporal_inner(sorted_pe_map_dim[i][0])
+        #dataflow.push_spatial_inner(selected_hw_dim[1][0])
+        #dataflow.push_cluster(dim_size[1])
+        return hw_info, mapping
 
-    def write_timeloop_dataflow(self, dimension, dataflow, m_file=None, layer_id=0):
+    def write_timeloop_hw(self, dimension, hw_info, m_file=None, layer_id=0):
+        file_name = "../../data/timeloop/hw_.yaml"
+        import yaml
+        example_file_name = "Example_timeloop_hw.yaml"
+        with open(example_file_name, "r") as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        x_size = hw_info.get_X()
+        y_size = hw_info.get_Y()
+        #data['architecture']['subtree'][0]['subtree'][0]['local'][0]['attributes']['depth'] = hw_info.get_L2_size() #not ensured
+        data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['name'] = 'PE[0..{}]'.format(max(x_size*y_size-1,1)) # Exception case(incur Timeloop error); when x=y=1
+        #data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['local'][0]['attributes']['depth'] = hw_info.get_L1_size() #not ensured
+        data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['local'][0]['attributes']['meshX'] = x_size
+        data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['local'][1]['attributes']['meshX'] = x_size
+        with open(file_name, "w") as f:
+            yaml.dump(data, f)
+        return file_name
+    def write_timeloop_problem(self, dimension, mapping_info, m_file=None, layer_id=0):
+        file_name = "../../data/timeloop/problem_.yaml"
+        import yaml
+        example_file_name = "conv1d.prob.yaml"
+        with open(example_file_name, "r") as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        l2_size_ = mapping_info.get_mapping_L2_tile_size()
+        l1_size_ = mapping_info.get_mapping_L1_tile_size()
+        par_size_ = mapping_info.get_mapping_parallel_size()
+        dim_size_ = [i*j*l for (i,j,l) in zip(l2_size_, l1_size_, par_size_)]
+        for i in range(0,6):
+            if dim_size_[i] < dimension[i]:
+                print("Dim size must be large than problem dimension: ", dim_size_[i], dimension[i])
+                raise 'Mapping Err'
+        data['problem']['instance']['M'] = int(dim_size_[0])
+        data['problem']['instance']['C'] = int(dim_size_[1])
+        data['problem']['instance']['P'] = int(dim_size_[2])
+        data['problem']['instance']['Q'] = int(dim_size_[3])
+        data['problem']['instance']['R'] = int(dim_size_[4])
+        data['problem']['instance']['S'] = int(dim_size_[5])
+        with open(file_name, "w") as f:
+            yaml.dump(data, f)
+        return file_name
+    def write_timeloop_mapping(self, dimension, hw_info, mapping_info, m_file=None, layer_id=0):
         if len(dimension) > 6:
             m_type = m_type_dicts[int(dimension[-1])]
         else:
             m_type = "CONV"
         # Dataflow description
-        with open("../../data/dataflow/dpt.m", "r") as fdpt:
-            fo = open("{}.m".format(m_file), "w")
-            fo.write("Network {} {{\n".format(layer_id))
-            fo.write("Layer {} {{\n".format(m_type))
-            fo.write("Type: {}\n".format(m_type))
-            fo.write(
-                "Dimensions {{ K: {:.0f}, C: {:.0f}, Y: {:.0f}, X: {:.0f}, R: {:.0f}, S: {:.0f} }}\n".format(
-                    *dimension))
-            if m_type == "CONV":
-                fo.write("Dataflow {\n")
-                for ln in range(dataflow.length()):
-                    [df_type, df_var, df_size1, df_size2] = dataflow.read_line(ln)
-                    if df_type == "Temporal" or df_type == "Spatial":
-                        fo.write("{}Map({},{}) {};\n".format(df_type,df_size1,df_size2,df_var))
-                    elif df_type == "Cluster":
-                        fo.write("{}({},{});\n".format(df_type,df_size1,df_var))
-                    else:
-                        print(df_type)
-                        raise "Exception Type"
-                fo.write("}\n")
-            else:
-                fdpt.seek(0)
-                fo.write(fdpt.read())
-            fo.write("}\n")
-            fo.write("}")
-            fo.close()
+        file_name = "../../data/timeloop/mapping_.yaml"
+
+        import yaml
+        mapping_data = {"mapping":
+                            [
+                                {"target":"DRAM",
+                                    "type":"temporal",
+                                    "factors":"C=1 M=1 R=1 S=1 N=1 P=1 Q=1", "permutation":"SRQPCMN"},
+                                {"target":"L2_spad",
+                                    "type":"temporal",
+                                    "factors":"", "permutation":""},
+                                {"target":"L2_spad",
+                                    "type":"spatial",
+                                    "factors":"", "permutation":""},
+                                {"target":"Buffer",
+                                    "type":"temporal",
+                                    "factors":"", "permutation":""}
+                            ]
+                        }
+        mapping_data['mapping'][1]['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L2_tile_size()[0],
+                                                                                            mapping_info.get_mapping_L2_tile_size()[1],
+                                                                                            mapping_info.get_mapping_L2_tile_size()[2],
+                                                                                            mapping_info.get_mapping_L2_tile_size()[3],
+                                                                                            mapping_info.get_mapping_L2_tile_size()[4],
+                                                                                            mapping_info.get_mapping_L2_tile_size()[5])
+        mapping_data['mapping'][1]['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[0]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[1]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[2]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[3]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[4]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[5]))
+        hw_map = [1 for i in range(0,6)]  #dim order
+        hw_map[hw_info.get_XDim()] = hw_info.get_X()
+        hw_map[hw_info.get_YDim()] = hw_info.get_Y()
+        mapping_data['mapping'][2]['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(hw_map[0],hw_map[1],hw_map[2],hw_map[3],hw_map[4],hw_map[5])
+        mapping_data['mapping'][2]['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[0]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[1]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[2]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[3]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[4]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[5]))
+        mapping_data['mapping'][3]['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L1_tile_size()[0],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[1],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[2],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[3],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[4],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[5])
+        mapping_data['mapping'][3]['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[0]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[1]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[2]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[3]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[4]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[5]))
+
+        with open(file_name, "w") as f:
+            yaml.dump(mapping_data, f)
+        return file_name
 
     def oberserve_timeloop(self, dimension, hw_gene, map_gene, firsttime=False, multi=False):
         if multi==True:
@@ -1022,58 +1160,56 @@ class MaestroEnvironment(object):
         main_m_file = self.random_file_name
         for i in range(lim):
             m_file = main_m_file+"{}".format(i)
-            self.write_maestro_dataflow (dimension[i], self.gene2dataflow(dimension[i], hw_gene[i], map_gene[i]), m_file=m_file)
-
+            #self.write_maestro_dataflow (dimension[i], self.gene2dataflow(dimension[i], hw_gene[i], map_gene[i]), m_file=m_file)
+            hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info)
+            map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info)
+            prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info)
             #HW gene
-            num_pes = hw_gene[i][2]
-            l1_size_cstr = hw_gene[i][1]
-            l2_size_cstr = hw_gene[i][0]
-            noc_bw_cstr = hw_gene[i][3]
-            dim_size = [int(hw_gene[i][HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[i][HW_GENE.DIM_SIZE_0], hw_gene[i][HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector)
-            os.remove("./{}.csv".format(m_file)) if os.path.exists("./{}.csv".format(m_file)) else None
-            command = [self._executable,
-                    "--Mapping_file={}.m".format(m_file),
-                    "--full_buffer=false",
-                    "--noc_bw_cstr={}".format(int(noc_bw_cstr)),
-                    "--noc_hops=1",
-                    "--noc_hop_latency=1",
-                    "--noc_mc_support=true",
-                    #"--num_pes={}".format(int(num_pes)),
-                    "--num_pes={}".format(int(dim_size[0]*dim_size[1])),
-                    #"--num_simd_lanes=1",
-                    "--l1_size_cstr={}".format(int(l1_size_cstr)),
-                    "--l2_size_cstr={}".format(int(l2_size_cstr)),
-                    "--print_res=false", "--print_res_csv_file=true", "--print_log_file=false", "--print_design_space=false", "--msg_print_lv=0"]
-
+            os.remove("./timeloop-model.map+stats.xml") if os.path.exists("./timeloop-model.map+stats.xml") else None
+            command = ["../../../timeloop/build/timeloop-model",
+                    hw_file_name,
+                    prob_file_name,
+                    map_file_name]
             process.append(Popen(command, stdout=PIPE, stderr=PIPE))
         for i in range(lim):
             stdout, stderr = process[i].communicate()
+            if stderr != b'':
+                print("Output: \n", stdout.decode('ascii'))
+                print("Error Code: \n", stderr.decode('ascii'))
+                raise "Timeloop/MAESTRO compile error"
             process[i].wait()
 
         #print(command, stdout, self.gene2dataflow(dimension, hw_gene, map_gene).mapping)
+        import xml.etree.ElementTree as elemTree
         try:
-            df = pd.read_csv("./{}.csv".format(m_file))
-            layer_name = df[" Layer Number"]
-            runtime = np.array(df[" Runtime (Cycles)"]).reshape(-1, 1)
-            throughput = np.array(df[" Throughput (MACs/Cycle)"]).reshape(-1, 1)
-            energy = np.array(df[" Activity count-based Energy (nJ)"]).reshape(-1, 1)
-            area = np.array(df[" Area"]).reshape(-1, 1)
-            power = np.array(df[" Power"]).reshape(-1, 1)
-            l1_size = np.array(df[" L1 SRAM Size Req (Bytes)"]).reshape(-1, 1)
-            l2_size = np.array(df["  L2 SRAM Size Req (Bytes)"]).reshape(-1, 1)
-            mac = np.array(df[" Num MACs"]).reshape(-1, 1)
-            os.remove("./{}.csv".format(m_file))  if os.path.exists("./{}.csv".format(m_file)) else None
-            os.remove("./log.txt") if os.path.exists("./log.txt") else None
-            #with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-            #    print(df)
-            #print(hw_gene[0], map_gene[0], stdout)
-            #print(type(int(runtime[0][0])))
-            if runtime[0][0] <= 0 or energy[0][0] <= 0 or throughput[0][0] <= 0:
+            '''
+            tree = elemTree.parse("./timeloop-model.map+stats.xml")
+            runtime = int(tree.find('./engine/topology_/levels_/item/px/cycles_').text)
+            energy = float(tree.find('./engine/topology_/levels_/item/px/energy_').text)
+            '''
+            f = open("./timeloop-model.stats.txt", "r")
+            while True:
+                line = f.readline()
+                if not line: break
+                if "Summary Stats" in line: break
+                # print(line)
+            f.readline()  # ----
+            util = float(f.readline().split(' ')[1])  # utilization
+            runtime = float(f.readline().split(' ')[1])  # cycles
+            energy = float(f.readline().split(' ')[1])  # energy
+            area = float(f.readline().split(' ')[1])  # area
+            #print(runtime, energy)
+            os.remove("./timeloop-model.map+stats.xml")  if os.path.exists("./timeloop-model.map+stats.xml") else None
+            os.remove("./timeloop-model.map.txt")  if os.path.exists("./timeloop-model.map.txt") else None
+            os.remove("./timeloop-model.stats.txt")  if os.path.exists("./timeloop-model.stats.txt") else None
+            if runtime <= 0 or energy <= 0: #or throughput[0][0] <= 0:
                 #print(runtime[0][0])
                 #print(energy[0][0])
                 #print(throughput[0][0])
                 raise
-            self.observation = [np.mean(x) for x in [runtime, throughput, energy, area, l1_size, l2_size, mac, power]]
+            #self.observation = [runtime, 1, energy, area, l1_size, l2_size, mac, power]
+            self.observation = [runtime, 1, energy, area, 1, 1, 1, 1]
             #print("pass")
             return self.judge()
         except:
@@ -1081,4 +1217,5 @@ class MaestroEnvironment(object):
             #print("+"*20)
             #print(num_pe, KTileSz, ClusterSz)
             #print("+" * 20)
+            raise "compile err?"
             return None, None
