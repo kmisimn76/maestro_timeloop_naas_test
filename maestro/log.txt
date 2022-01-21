@@ -1630,3 +1630,3267 @@ outstanding_delay (for all iterations in this case): 1354755
 ======================= END CASE 2 =======================
 
 
+=======================
+Log for cluster level 0
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 128, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(1,1) N
+SpatialMap(1,1) K
+TemporalMap(3,3) R
+TemporalMap(3,3) S
+TemporalMap(128,128) C
+TemporalMap(112,112) X
+TemporalMap(112,112) Y
+
+Input tensor <input is not sp-mapped 
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 0
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 387200
+	spatial_mapping_size387200
+	tensor_spatial_partial_sum_mapping_size446054400
+Input tensor <input is not sp-mapped 
+Input Tensor input
+	ingress_traffic 1605632
+	spatial_mapping_size 51380224
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 36864
+	spatial_mapping_size 36864
+Overall ingress_spatial_traffic: 1642496
+Overall egress_spatial_traffic: 387200
+Number of MACs over sub cluster array: 446054400
+=======================
+Log for cluster level 1
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 1, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(3,3) S
+TemporalMap(3,3) R
+TemporalMap(1,1) K
+TemporalMap(1,1) N
+TemporalMap(1,1) Y
+TemporalMap(1,1) X
+SpatialMap(1,1) C
+
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 10
+outstanding_delay (for all iterations in this case): 10
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 36963 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 332667
+======================= END CASE 2 =======================
+
+
+======================= CASE 2 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 12321 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 110889
+======================= END CASE 3 =======================
+
+
+======================= CASE 3 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 4 =======================
+
+
+======================= CASE 4 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 5 =======================
+
+
+======================= CASE 5 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 6 =======================
+
+
+======================= CASE 6 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 7 =======================
+
+
+======================= CASE 7 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 27
+======================= END CASE 8 =======================
+
+
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 446054400
+ingress_spatial_traffic (per iteration): 1642496
+egress_spatial_traffic (per iteration): 387200
+
+ingress_comm_delay (per iteration): 1643
+egress_comm_delay (per iteration): 388
+computation_delay (per iteration): 451585
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 453228
+outstanding_delay (for all iterations in this case): 453228
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 0
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 387200
+	spatial_mapping_size387200
+	tensor_spatial_partial_sum_mapping_size446054400
+Input tensor <input is not sp-mapped 
+Input Tensor input
+	ingress_traffic 0
+	spatial_mapping_size 51380224
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 36864
+	spatial_mapping_size 36864
+Overall ingress_spatial_traffic: 36864
+Overall egress_spatial_traffic: 387200
+Number of MACs over sub cluster array: 446054400
+=======================
+Log for cluster level 1
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 1, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(3,3) S
+TemporalMap(3,3) R
+TemporalMap(1,1) K
+TemporalMap(1,1) N
+TemporalMap(1,1) Y
+TemporalMap(1,1) X
+SpatialMap(1,1) C
+
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 10
+outstanding_delay (for all iterations in this case): 10
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 36963 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 332667
+======================= END CASE 2 =======================
+
+
+======================= CASE 2 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 12321 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 110889
+======================= END CASE 3 =======================
+
+
+======================= CASE 3 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 4 =======================
+
+
+======================= CASE 4 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 5 =======================
+
+
+======================= CASE 5 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 6 =======================
+
+
+======================= CASE 6 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 7 =======================
+
+
+======================= CASE 7 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 27
+======================= END CASE 8 =======================
+
+
+num computations (per iteration): 446054400
+ingress_spatial_traffic (per iteration): 36864
+egress_spatial_traffic (per iteration): 387200
+
+ingress_comm_delay (per iteration): 37
+egress_comm_delay (per iteration): 388
+computation_delay (per iteration): 451585
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 451585
+outstanding_delay (for all iterations in this case): 1354755
+======================= END CASE 2 =======================
+
+
+=======================
+Log for cluster level 0
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 128, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(1,1) N
+SpatialMap(1,1) K
+TemporalMap(3,3) R
+TemporalMap(3,3) S
+TemporalMap(128,128) C
+TemporalMap(112,112) X
+TemporalMap(112,112) Y
+
+Input tensor <input is not sp-mapped 
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 0
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 387200
+	spatial_mapping_size387200
+	tensor_spatial_partial_sum_mapping_size446054400
+Input tensor <input is not sp-mapped 
+Input Tensor input
+	ingress_traffic 1605632
+	spatial_mapping_size 51380224
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 36864
+	spatial_mapping_size 36864
+Overall ingress_spatial_traffic: 1642496
+Overall egress_spatial_traffic: 387200
+Number of MACs over sub cluster array: 446054400
+=======================
+Log for cluster level 1
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 1, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(3,3) S
+TemporalMap(3,3) R
+TemporalMap(1,1) K
+TemporalMap(1,1) N
+TemporalMap(1,1) Y
+TemporalMap(1,1) X
+SpatialMap(1,1) C
+
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 10
+outstanding_delay (for all iterations in this case): 10
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 36963 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 332667
+======================= END CASE 2 =======================
+
+
+======================= CASE 2 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 12321 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 110889
+======================= END CASE 3 =======================
+
+
+======================= CASE 3 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 4 =======================
+
+
+======================= CASE 4 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 5 =======================
+
+
+======================= CASE 5 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 6 =======================
+
+
+======================= CASE 6 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 7 =======================
+
+
+======================= CASE 7 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 27
+======================= END CASE 8 =======================
+
+
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 446054400
+ingress_spatial_traffic (per iteration): 1642496
+egress_spatial_traffic (per iteration): 387200
+
+ingress_comm_delay (per iteration): 1643
+egress_comm_delay (per iteration): 388
+computation_delay (per iteration): 451585
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 453228
+outstanding_delay (for all iterations in this case): 453228
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 0
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 387200
+	spatial_mapping_size387200
+	tensor_spatial_partial_sum_mapping_size446054400
+Input tensor <input is not sp-mapped 
+Input Tensor input
+	ingress_traffic 0
+	spatial_mapping_size 51380224
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 36864
+	spatial_mapping_size 36864
+Overall ingress_spatial_traffic: 36864
+Overall egress_spatial_traffic: 387200
+Number of MACs over sub cluster array: 446054400
+=======================
+Log for cluster level 1
+=======================
+Num sub clusters: 32
+Cluster tile size
+Dimension Table contents
+C: size = 128, outer stride = 1
+K: size = 1, outer stride = 1
+N: size = 1, outer stride = 1
+R: size = 3, outer stride = 1
+S: size = 3, outer stride = 1
+X: size = 112, outer stride = 1
+X': size = 110, outer stride = 1
+Y: size = 112, outer stride = 1
+Y': size = 110, outer stride = 1
+
+Cluster Dataflow
+TemporalMap(3,3) S
+TemporalMap(3,3) R
+TemporalMap(1,1) K
+TemporalMap(1,1) N
+TemporalMap(1,1) Y
+TemporalMap(1,1) X
+SpatialMap(1,1) C
+
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+======================= CASE 0 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 1 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+Note: Initialization case; cannot exploit latency hiding in this case
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Ingress communication + computation>> bound (Initialization case)
+outstanding_delay (per iteration): 10
+outstanding_delay (for all iterations in this case): 10
+======================= END CASE 1 =======================
+
+
+======================= CASE 1 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 36963 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 332667
+======================= END CASE 2 =======================
+
+
+======================= CASE 2 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 12321 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 110889
+======================= END CASE 3 =======================
+
+
+======================= CASE 3 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 4 =======================
+
+
+======================= CASE 4 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 5 =======================
+
+
+======================= CASE 5 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 333 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 2997
+======================= END CASE 6 =======================
+
+
+======================= CASE 6 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 111 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 0
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 32
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 32
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 999
+======================= END CASE 7 =======================
+
+
+======================= CASE 7 =======================
+@ cluster level 1
+----------------------------
+<<Iteration status>>
+Num status occurrences: 3 
+Iteration states: 
+
+<Iteration state>
+Dimension C
+Iteration Position: Steady
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension K
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension N
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension R
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension S
+Iteration Position: Init
+is unrolled? Yes
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension X
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+
+<Iteration state>
+Dimension Y
+Iteration Position: Init
+is unrolled? No
+is at Init position and edge? No
+Does it have an edge PE at spatial edge case? No
+----------------------------
+
+Output Tensor output
+	egress_traffic 1
+	spatial_mapping_size32
+	tensor_spatial_partial_sum_mapping_size288
+Input tensor <input is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor input
+	ingress_traffic 32
+	spatial_mapping_size 32
+Input tensor <filter is sp-mapped. num clusters =  32, num edge clusters = 1
+Input Tensor filter
+	ingress_traffic 288
+	spatial_mapping_size 288
+Overall ingress_spatial_traffic: 320
+Overall egress_spatial_traffic: 1
+Number of MACs over sub cluster array: 288
+num computations (per iteration): 288
+ingress_spatial_traffic (per iteration): 320
+egress_spatial_traffic (per iteration): 1
+
+ingress_comm_delay (per iteration): 1
+egress_comm_delay (per iteration): 1
+computation_delay (per iteration): 9
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 9
+outstanding_delay (for all iterations in this case): 27
+======================= END CASE 8 =======================
+
+
+num computations (per iteration): 446054400
+ingress_spatial_traffic (per iteration): 36864
+egress_spatial_traffic (per iteration): 387200
+
+ingress_comm_delay (per iteration): 37
+egress_comm_delay (per iteration): 388
+computation_delay (per iteration): 451585
+
+This case is <<Computation>> bound
+outstanding_delay (per iteration): 451585
+outstanding_delay (for all iterations in this case): 1354755
+======================= END CASE 2 =======================
+
+

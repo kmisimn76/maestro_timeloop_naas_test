@@ -1,14 +1,14 @@
 problem:
   instance:
-    C: 513
+    C: 16
     Hdilation: 1
     Hstride: 1
-    M: 516
+    M: 80
     N: 1
-    P: 15
-    Q: 35
+    P: 250
+    Q: 240
     R: 4
-    S: 4
+    S: 6
     Wdilation: 1
     Wstride: 1
   shape:

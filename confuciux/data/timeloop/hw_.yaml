@@ -25,14 +25,14 @@ architecture:
         - attributes:
             block-size: 1
             depth: 250890000
-            meshX: 6
+            meshX: 16
             width: 32
           class: regfile
           name: Buffer
         - attributes:
             datawidth: 32
-            meshX: 6
+            meshX: 16
           class: mac
           name: MACC
-        name: PE[0..209]
+        name: PE[0..255]
   version: 0.3

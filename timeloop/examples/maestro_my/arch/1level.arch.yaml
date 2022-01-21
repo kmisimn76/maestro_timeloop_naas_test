@@ -26,7 +26,7 @@ architecture:
               #word-bits: 8
               word-bits: 32
         subtree:
-          - name: PE[0..1023]
+          - name: PE[0..15]
             local:
               - name: Buffer
                 class: regfile
@@ -38,11 +38,11 @@ architecture:
                   block-size: 1
                   #word-bits: 8
                   word-bits: 32
-                  meshX: 32
+                  meshX: 4
               - name: MACC
                 #class: intmac
                 class: mac
                 attributes:
                   #datawidth: 8
                   datawidth: 32
-                  meshX: 32
+                  meshX: 4
