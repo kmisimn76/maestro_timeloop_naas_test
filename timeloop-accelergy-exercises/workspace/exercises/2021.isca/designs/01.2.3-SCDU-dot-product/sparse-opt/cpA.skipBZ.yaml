@@ -6,7 +6,7 @@ sparse_optimizations:
         data-spaces:
           - name: A           # tensor name
             ranks:            # points to a list of ranks in fibertree representation
-              - format: CP    # coordinate payload representation format
+              - format: UOP    # coordinate payload representation format
                               # options: CP, UB, RLE, UOP (i.e., CSR upper rank)
       action-optimization:    # keyword for *explicit* storage level optimization
         - type: skipping      # optimization type: either "gating" or "skipping"

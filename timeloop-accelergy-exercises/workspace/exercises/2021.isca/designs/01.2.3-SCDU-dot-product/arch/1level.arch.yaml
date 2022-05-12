@@ -8,8 +8,7 @@ architecture:
 
       local:
         - name: Buffer
-          class: storage
-          subclass: regfile_metadata    # compound component with separate data and metadata storages
+          class: regfile
                                         # definition found in ../components/refile_metadata.yaml
           attributes:
             data_storage_depth: 64      # depth of the data storage only

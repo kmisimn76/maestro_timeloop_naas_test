@@ -1,0 +1,17 @@
+mapping:
+  - target: DRAM
+    type: temporal
+    factors: C=16 M=16 R=1 S=1 N=1 P=1 Q=1
+    permutation: SRQPCMN
+  - target: L2
+    type: temporal
+    factors: C=8 M=8 R=3 S=3 N=1 P=2 Q=2
+    permutation: SRQPCMN
+  - target: L2
+    type: spatial
+    factors: C=4 M=4 R=1 S=1 N=1 P=1 Q=1
+    permutation: SRQPCMN
+  - target: Buffer
+    type: temporal
+    factors: C=1 M=1 R=1 S=1 N=1 P=7 Q=7
+    permutation: SRQPCMN
