@@ -16,6 +16,10 @@ sparse_optimizations:
         ranks:
         - format: UB
         - format: UB
+        - format: UB
+        - format: UB
+        - format: UB
+        - format: UB
   - action-optimization:
     - condition-on:
       - Inputs

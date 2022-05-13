@@ -34,6 +34,7 @@ MapGene = _MapGene()
 
 from TimeloopEstimation import TimeloopEstimator
 from SparseloopEstimation import SparseloopEstimator
+from FPGAConstraint.AlveoU200 import Constraint_AlveoU200_Sparse
 
 class MaestroEnvironment(object):
 
@@ -47,8 +48,11 @@ class MaestroEnvironment(object):
         random.seed()
         random_file_name = random.randint(0, 2 ** 31)
         self.random_file_name = "{}".format(random_file_name)
+
+        self.fpga_constraint = Constraint_AlveoU200_Sparse()
         #self.timeloop_estimator = TimeloopEstimator(self.random_file_name)
         self.timeloop_estimator = SparseloopEstimator(self.random_file_name) #Sparse-aware
+
         self.is_gemm = False
 
         self.state = np.array([0.5]*8)
@@ -201,23 +205,25 @@ class MaestroEnvironment(object):
             # PE Pop
             reward = None
             constraint = None
-            while reward==None and (constraint==None or constraint > self.constraint_value):
+            while reward==None and (constraint==None or constraint > self.constraint_value): #select valid gene
                 rand_gene = HWGene.generate_random_gene()
                 hw_new_population[count] = np.array(rand_gene, dtype=float).copy()
                 if use_maestro is True:
                     reward, constraint = self.oberserve_maestro(self.model_defs[0], hw_new_population[count], sample_map_gene)
                 else:
-                    self.observation, (reward, constraint) = self.timeloop_estimator.observe_timeloop(self.model_defs[0], hw_new_population[count], sample_map_gene, self.judge)
+                    #self.observation, (reward, constraint), estimated = self.timeloop_estimator.observe_timeloop(self.model_defs[0], hw_new_population[count], sample_map_gene, self.judge, self.fpga_constraint)
+                    reward, constraint = self.exterior_search(self.model_defs[0], hw_new_population[count], sample_map_gene)
             # Map Pop for each layers
             for i in range(num_layers):
                 reward = None
-                while reward==None:
+                while reward==None: #select valid gene
                     rand_gene = MapGene.generate_random_gene()
                     map_new_population[i][count] = np.array(rand_gene, dtype=float).copy()
                     if use_maestro is True:
                         reward, constraint = self.oberserve_maestro(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
                     else:
-                        self.observation, (reward, constraint) = self.timeloop_estimator.observe_timeloop(self.model_defs[0], sample_hw_gene, map_new_population[i][count], self.judge)
+                        #self.observation, (reward, constraint), estimated = self.timeloop_estimator.observe_timeloop(self.model_defs[0], sample_hw_gene, map_new_population[i][count], self.judge, self.fpga_constraint)
+                        reward, constraint = self.exterior_search(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
 
             count += 1
         return hw_new_population, map_new_population
@@ -228,7 +234,17 @@ class MaestroEnvironment(object):
         invalid_count = 0
         for i in tqdm(range(num_pop), desc="HW initial fitness"):
             hw_gene = hw_new_population[i]
-            reward,total_used_constraint  = self.exterior_search_all_layer(self.model_defs, hw_gene, map_new_population, 0)
+
+            tot_reward = 0
+            tot_constraint = 0
+            for i in range(len(model)):
+                reward, constraint = self.exterior_search(self.model_defs[i], hw_gene, map_new_population[i][num_pop])
+                if reward == None:
+                    return None, None
+                tot_reward += reward
+                tot_constraint = constraint
+            reward = tot_reward
+            total_used_constraint = tot_constraint
             if reward is None: # Can't compilation
                 reward = float("-Inf")
                 #print("Error with reward")
@@ -277,7 +293,7 @@ class MaestroEnvironment(object):
         import time
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
-        logging_file = "output_{}.log".format(time.strftime('%Y%m%d_%H%M%S'))
+        logging_file = "logs/output_{}.log".format(time.strftime('%Y%m%d_%H%M%S'))
         os.remove(logging_file)  if os.path.exists(logging_file) else None
         output_file_handler = logging.FileHandler(logging_file)
         stdout_handler = logging.StreamHandler(sys.stdout)
@@ -423,36 +439,6 @@ class MaestroEnvironment(object):
             pickle.dump(chkpt, fd)
         # print(self.sol)
 
-    def exterior_search_special(self, actions, action_size=2):
-        raise "Depleted"
-        total_reward = None
-        mac_rec_list = []
-        latency_list = []
-        total_constraint = 0
-        for i in range(len(actions)):
-            action = actions[i]
-            maestro_state = np.concatenate((self.model_defs[i], action))
-            reward, constraint = self.oberserve_maestro(maestro_state)
-            if reward == None:
-                return None
-            else:
-                mac_rec_list.append(self.observation[-1])
-                latency_list.append(self.observation[0])
-            total_constraint += constraint
-        total_reward = sum(mac_rec_list)/sum(latency_list)
-        return total_reward, total_constraint
-
-    def exterior_search_all_layer(self, model, hw_gene, map_genes, num_pop): #layer_info = dimension
-        tot_reward = 0
-        tot_constraint = 0
-        for i in range(len(model)):
-            #reward, constraint = self.oberserve_maestro(model[i], hw_gene, map_genes[i][num_pop])
-            reward, constraint = self.exterior_search(model[i], hw_gene, map_genes[i][num_pop])
-            if reward == None:
-                return None, None
-            tot_reward += reward
-            tot_constraint = constraint
-        return tot_reward, tot_constraint
     def exterior_search(self, layer_info, hw_gene, map_gene):
         if self.fitness == "thrpt_ave" or self.fitness=="thrpt_naive":
             raise "Depleted"
@@ -468,7 +454,7 @@ class MaestroEnvironment(object):
             if use_maestro is True:
                 reward, constraint = self.oberserve_maestro(layer_info, hw_gene, map_gene)
             else:
-                self.observation, (reward, constraint) = self.timeloop_estimator.observe_timeloop(layer_info, hw_gene, map_gene, self.judge)
+                self.observation, (reward, constraint), estimated = self.timeloop_estimator.observe_timeloop(layer_info, hw_gene, map_gene, self.judge, self.fpga_constraint)
             self.exp_table[table_entry] = (reward, constraint)
         if reward == None:
             return None, None

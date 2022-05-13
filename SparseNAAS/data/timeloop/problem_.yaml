@@ -1,14 +1,14 @@
 problem:
   instance:
-    C: 129
+    C: 16
     Hdilation: 1
     Hstride: 1
-    M: 132
+    M: 80
     N: 1
-    P: 113
-    Q: 113
-    R: 39
-    S: 4
+    P: 254
+    Q: 396
+    R: 4
+    S: 6
     Wdilation: 1
     Wstride: 1
     densities:

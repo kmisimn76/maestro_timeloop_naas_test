@@ -19,8 +19,9 @@ class SparseloopEstimator():
 
     def __init__(self, random_file_name):
         self.random_file_name = random_file_name
-        self.example_yaml_hw = "timeloop_example_yaml/sparse_example/1level_sparse.arch.yaml"
+        self.example_yaml_hw = "timeloop_example_yaml/sparse_example/sparse_npu.arch.yaml"
         self.example_yaml_prob = "timeloop_example_yaml/sparse_example/conv1d_sparse.prob.yaml"
+        self.example_yaml_map = "timeloop_example_yaml/sparse_example/sparse_npu.map.yaml"
         self.example_yaml_sparseopt = "timeloop_example_yaml/sparse_example/sparse_opt.yaml"
         self.result_yaml_hw = "../../data/timeloop/hw_.yaml"
         self.result_yaml_prob = "../../data/timeloop/problem_.yaml"
@@ -53,11 +54,12 @@ class SparseloopEstimator():
 
         data_DRAM = data['architecture']['subtree'][0]['local'][0]
         data_L2 = data['architecture']['subtree'][0]['subtree'][0]['local'][0]
-        data_PE_Y = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]
-        data_PE_L1 = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['local'][0]
-        data_PE_X = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['subtree'][0]
-        data_PE_Buffer = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['subtree'][0]['local'][0]
-        data_PE_MAC = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['subtree'][0]['local'][1]
+        data_L1 = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]['local'][0]
+        data_SIMDCore = data['architecture']['subtree'][0]['subtree'][0]['subtree'][0]
+        data_PE_Y = data_SIMDCore['subtree'][0]
+        data_PE_X = data_PE_Y['subtree'][0]
+        data_PE_Buffer = data_PE_X['local'][0]
+        data_PE_MAC = data_PE_X['local'][1]
 
         data_PE_Y['name'] = 'PErow[0..{}]'.format(max(y_size-1,1)) # Exception case(incur Timeloop error); when x=y=1
         data_PE_X['name'] = 'PE[0..{}]'.format(max(x_size-1,1)) # Exception case(incur Timeloop error); when x=y=1
@@ -99,59 +101,42 @@ class SparseloopEstimator():
             m_type = "CONV"
         # Dataflow description
         file_name = self.result_yaml_map
-
-        mapping_data = {"mapping":
-                            [
-                                {"target":"DRAM",
-                                    "type":"temporal",
-                                    "factors":"C=1 M=1 R=1 S=1 N=1 P=1 Q=1", "permutation":"SRQPCMN"},
-                                {"target":"L2",
-                                    "type":"temporal",
-                                    "factors":"", "permutation":""},
-                                {"target":"L2",
-                                    "type":"spatial",
-                                    "factors":"", "permutation":""},
-                                {"target":"L1",
-                                    "type":"temporal",
-                                    "factors":"", "permutation":""},
-                                {"target":"L1",
-                                    "type":"spatial",
-                                    "factors":"", "permutation":""},
-                                {"target":"Buffer",
-                                    "type":"temporal",
-                                    "factors":"", "permutation":""}
-                            ]
-                        }
+        example_file_name = self.example_yaml_map
+        with open(example_file_name, "r") as f:
+            mapping_data = yaml.load(f, Loader=yaml.FullLoader)
+        mapping_data_DRAM_temp = mapping_data['mapping'][0]
         mapping_data_L2_temp = mapping_data['mapping'][1]
-        mapping_data_L2_spat = mapping_data['mapping'][2]
-        mapping_data_L1_temp = mapping_data['mapping'][3]
-        mapping_data_L1_spat = mapping_data['mapping'][4]
-        mapping_data_Buf = mapping_data['mapping'][5]
+        mapping_data_L1_temp = mapping_data['mapping'][2]
+        mapping_data_L1_spat = mapping_data['mapping'][3]
+        mapping_data_Buf = mapping_data['mapping'][4]
 
-        #L2 map
-        mapping_data_L2_temp['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L2_tile_size()[0],
+        #DRAM map
+        mapping_data_DRAM_temp['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L2_tile_size()[0],
                                                                                             mapping_info.get_mapping_L2_tile_size()[1],
                                                                                             mapping_info.get_mapping_L2_tile_size()[2],
                                                                                             mapping_info.get_mapping_L2_tile_size()[3],
                                                                                             mapping_info.get_mapping_L2_tile_size()[4],
                                                                                             mapping_info.get_mapping_L2_tile_size()[5])
-        mapping_data_L2_temp['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[0]),
+        mapping_data_DRAM_temp['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[0]),
                                                                             DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[1]),
                                                                             DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[2]),
                                                                             DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[3]),
                                                                             DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[4]),
                                                                             DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[5]))
-        hw_y_map = [1 for i in range(0,6)]  #dim order
-        hw_y_map[hw_info.get_YDim()] = hw_info.get_Y()
-        mapping_data_L2_spat['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(hw_y_map[0],hw_y_map[1],hw_y_map[2],hw_y_map[3],hw_y_map[4],hw_y_map[5])
-        mapping_data_L2_spat['permutation'] = "SRQPCMN"
+        #L2 map(=1)
+        mapping_data_L2_temp['factors'] = "M=1 C=1 P=1 Q=1 R=1 S=1 N=1"
+        mapping_data_L2_temp['permutation'] = "SRQPCMN"
 
-        #L1 map
+
+        #L1 map(=1)
         mapping_data_L1_temp['factors'] = "M=1 C=1 P=1 Q=1 R=1 S=1 N=1"
         mapping_data_L1_temp['permutation'] = "SRQPCMN"
-        hw_x_map = [1 for i in range(0,6)]  #dim order
-        hw_x_map[hw_info.get_XDim()] = hw_info.get_X()
-        mapping_data_L1_spat['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(hw_x_map[0],hw_x_map[1],hw_x_map[2],hw_x_map[3],hw_x_map[4],hw_x_map[5])
+
+        #Parallel map
+        hw_map = [1 for i in range(0,6)]  #dim order
+        hw_map[hw_info.get_YDim()] = hw_info.get_Y()
+        hw_map[hw_info.get_XDim()] = hw_info.get_X()
+        mapping_data_L1_spat['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(hw_map[0],hw_map[1],hw_map[2],hw_map[3],hw_map[4],hw_map[5])
         mapping_data_L1_spat['permutation'] = "SRQPCMN"
 
         mapping_data_Buf['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L1_tile_size()[0],
@@ -181,6 +166,7 @@ class SparseloopEstimator():
         # get buffer temporal rank = (# of elet > 1) - (# of elt == 1)
         rank_map = [i for i in mapping_info.get_mapping_L1_tile_size()]  #dim order
         rank_map[hw_info.get_XDim()] *= hw_info.get_X()
+        rank_map[hw_info.get_YDim()] *= hw_info.get_Y()
         compression_rank = (6 - rank_map.count(1))
         # set compression method
         data_L1 = data['sparse_optimizations']['targets'][0]
@@ -191,11 +177,12 @@ class SparseloopEstimator():
             yaml.dump(data, f)
         return file_name
 
-    def observe_timeloop(self, dimension, hw_gene, map_gene, judge, firsttime=False, multi=False):
+    def observe_timeloop(self, dimension, hw_gene, map_gene, judge, target_constraint, firsttime=False, multi=False):
         if multi==True:
             if (len(dimension) != len(hw_gene)) or (len(dimension) != len(map_gene)):
                 raise "Invalid Argument"
             lim = len(dimension)
+            raise 'len must be 1'
         else:
             lim = 1
             dimension = [dimension]
@@ -203,16 +190,17 @@ class SparseloopEstimator():
             map_gene = [map_gene]
         if len(dimension[0]) < 8: #6 diemsion + density
             raise "Model def don't contain density information"
+
         process = []
         main_m_file = self.random_file_name
         for i in range(lim):
+            # Run timeloop
             m_file = main_m_file+"{}".format(i)
             hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
             hw_file_name = self.write_timeloop_hw(dimension[i], hw_info)
             map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info)
             prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info)
             sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info)
-            #HW gene
             os.remove("./timeloop-model.map+stats.xml") if os.path.exists("./timeloop-model.map+stats.xml") else None
             command = ["../../../timeloop/build/timeloop-model",
                     hw_file_name,
@@ -228,9 +216,19 @@ class SparseloopEstimator():
                 raise "Timeloop/MAESTRO compile error"
             process[i].wait()
 
-        #print(command, stdout, self.gene2dataflow(dimension, hw_gene, map_gene).mapping)
-        import xml.etree.ElementTree as elemTree
+        # Get timeloop result
         try:
+            import xml.etree.ElementTree as elemTree
+            timeloop_stat = elemTree.parse('./timeloop-model.map+stats.xml').getroot()
+            timeloop_stat_item_px_macc = timeloop_stat[0][0][0][2][0]
+            timeloop_stat_item_px_buffer = timeloop_stat[0][0][0][3][0]
+            timeloop_stat_item_px_l1 = timeloop_stat[0][0][0][4][0]
+            timeloop_stat_item_px_l2 = timeloop_stat[0][0][0][5][0]
+            timeloop_stat_item_px_dram = timeloop_stat[0][0][0][6][0]
+            if timeloop_stat_item_px_buffer[2][0][0].text!='Buffer' or timeloop_stat_item_px_l1[2][0][0].text!='L1' \
+                     or timeloop_stat_item_px_l2[2][0][0].text!='L2' or timeloop_stat_item_px_dram[2][0][0].text!='DRAM':
+                print("timeloop output error ???")
+                raise "timeloop output error"
             f = open("./timeloop-model.stats.txt", "r")
             while True:
                 line = f.readline()
@@ -238,22 +236,41 @@ class SparseloopEstimator():
                 if "Summary Stats" in line: break
                 # print(line)
             f.readline()  # ----
+
+            #Get metrics(observation)
+            buffer_weight = timeloop_stat_item_px_buffer[3][2][0][0].text
+            buffer_input = timeloop_stat_item_px_buffer[3][2][0][1].text
+            buffer_output = timeloop_stat_item_px_buffer[3][2][0][2].text
+            l1_weight = timeloop_stat_item_px_l1[3][2][0][0].text
+            l1_input = timeloop_stat_item_px_l1[3][2][0][1].text
+            l1_output = timeloop_stat_item_px_l1[3][2][0][2].text
+            l2_weight = timeloop_stat_item_px_l2[3][2][0][0].text
+            l2_input = timeloop_stat_item_px_l2[3][2][0][1].text
+            l2_output = timeloop_stat_item_px_l2[3][2][0][2].text
             util = float(f.readline().split(' ')[1])  # utilization
             runtime = float(f.readline().split(' ')[1])  # cycles
             energy = float(f.readline().split(' ')[1])  # energy
             area = float(f.readline().split(' ')[1])  # area
+            l2_size = l2_weight + l2_input + l2_output
+            l1_size = l1_weight + l1_input + l1_output
+            mac = 1 #unsupport
+            power = 1 #unsupport
+            observation = [runtime, 1, energy, area, l1_size, l2_size, mac, power]
+            estimated = {'util': util, 'cycle': runtime, 'energy': energy, 'area': area, 'mac': mac, 'power': power,
+                        'buffer_weight': buffer_weight, 'buffer_input': buffer_input, 'buffer_output': buffer_output,
+                        'l1_weight': l1_weight, 'l1_input': l1_input, 'l1_output': l1_output,
+                        'l2_weight': l2_weight, 'l2_input': l2_input, 'l2_output': l2_output }
+
             os.remove("./timeloop-model.map+stats.xml")  if os.path.exists("./timeloop-model.map+stats.xml") else None
             os.remove("./timeloop-model.map.txt")  if os.path.exists("./timeloop-model.map.txt") else None
             os.remove("./timeloop-model.stats.txt")  if os.path.exists("./timeloop-model.stats.txt") else None
-            if runtime <= 0 or energy <= 0: #or throughput[0][0] <= 0:
-                #print(runtime[0][0])
-                #print(energy[0][0])
-                #print(throughput[0][0])
-                raise
-            #observation = [runtime, 1, energy, area, l1_size, l2_size, mac, power]
-            observation = [runtime, 1, energy, area, 1, 1, 1, 1]
-            #print("pass")
-            return observation, judge(observation)
+            hw_info, mapping_info = self.gene2mapping(dimension[0], hw_gene[0], map_gene[0]) #lim must be 1
+            if runtime <= 0 or energy <= 0: #Invalid
+                raise 'invalid'
+            if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
+                raise 'invalid'
+            return observation, judge(observation), estimated
         except:
             raise "compile err?"
+            # Invalid!
             return None, None

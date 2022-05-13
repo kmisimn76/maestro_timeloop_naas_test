@@ -59,4 +59,4 @@ problem:
     densities:
         Inputs:
             distribution: fixed-structured
-            density: 0.01
+            density: 0.4

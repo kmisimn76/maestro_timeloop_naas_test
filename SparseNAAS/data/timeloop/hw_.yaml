@@ -28,7 +28,7 @@ architecture:
             block-size: 1
             data_storage_depth: 640
             data_storage_width: 8
-            depth: 25089000
+            depth: 250890000
             metadata_datawidth: 4
             metadata_storage_depth: 620000000
             metadata_storage_width: 4
@@ -36,24 +36,26 @@ architecture:
             word-bits: 8
           class: regfile
           name: L1
-        name: PErow[0..5]
+        name: SIMDCore
         subtree:
-        - local:
-          - attributes:
-              block-size: 1
-              data_storage_depth: 640
-              data_storage_width: 8
-              depth: 25089000
-              metadata_datawidth: 4
-              metadata_storage_depth: 3200000
-              metadata_storage_width: 4
-              width: 8
-              word-bits: 8
-            class: regfile
-            name: Buffer
-          - attributes:
-              datawidth: 8
-            class: intmac
-            name: MACC
-          name: PE[0..38]
+        - name: PErow[0..15]
+          subtree:
+          - local:
+            - attributes:
+                block-size: 1
+                data_storage_depth: 640
+                data_storage_width: 8
+                depth: 25089000
+                metadata_datawidth: 4
+                metadata_storage_depth: 3200000
+                metadata_storage_width: 4
+                width: 8
+                word-bits: 8
+              class: regfile
+              name: Buffer
+            - attributes:
+                datawidth: 8
+              class: intmac
+              name: MACC
+            name: PE[0..15]
   version: 0.3
