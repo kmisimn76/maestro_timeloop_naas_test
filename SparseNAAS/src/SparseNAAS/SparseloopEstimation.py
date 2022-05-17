@@ -4,7 +4,11 @@ import yaml
 import numpy as np
 import os
 
-from TimeloopMapping import *
+from HWGene import *
+from MapGene import *
+#from HWGene import DIM
+#from MapGene import DIM
+#import Mapping
 
 df_dict = {1:"dla", 2:"shi", 3:"eye"}
 m_type_dicts = {1:"CONV", 2:"DSCONV"}
@@ -35,16 +39,24 @@ class SparseloopEstimator():
         return y
 
     def gene2mapping(self, dimension, hw_gene, map_gene):
-        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
-        dim_size = [int(hw_gene[HW_GENE.NUM_PE]**x) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
         hw_info = TIMELOOP_HW()
         mapping = TIMELOOP_MAPPING()
-        hw_info.set_HW(dim_size[0], dim_size[1], selected_hw_dim[0][0], selected_hw_dim[1][0], hw_gene[HW_GENE.L2_SIZE], hw_gene[HW_GENE.L1_SIZE])
-        mapping.set_mapping_gene(dimension[0:6], dim_size, hw_gene, map_gene)
+        #hw_info.set_HW(dim_size[0], dim_size[1], selected_hw_dim[0][0], selected_hw_dim[1][0], hw_gene[HW_GENE.L2_SIZE], hw_gene[HW_GENE.L1_SIZE], hw_gene[HW_GENE.)
+        hw_info.set_HW(hw_gene)
+        mapping.set_mapping_gene(dimension[0:6], hw_info.dim_size, hw_gene, map_gene)
+        # check invalid mapping
+        if hw_info.get_XDim()>=4 or hw_info.get_YDim()>=4: #except R,S
+            raise Exception('imported RS')
+        if (hw_info.get_XDim()==2 and hw_info.get_YDim()==3) or \
+           (hw_info.get_XDim()==3 and hw_info.get_YDim()==2): #except WH PE
+            raise Exception('parallel WH')
+        if mapping.get_mapping_PE_tile_size().count(1)==6:
+            raise Exception('cannot exploit sparsity')
         return hw_info, mapping
 
-    def write_timeloop_hw(self, dimension, hw_info, m_file=None, layer_id=0):
-        file_name = self.result_yaml_hw
+
+    def write_timeloop_hw(self, dimension, hw_info, filename_=None, layer_id=0):
+        file_name = self.result_yaml_hw if filename_ is None else filename_
         example_file_name = self.example_yaml_hw
         with open(example_file_name, "r") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
@@ -64,23 +76,28 @@ class SparseloopEstimator():
         data_PE_Y['name'] = 'PErow[0..{}]'.format(max(y_size-1,1)) # Exception case(incur Timeloop error); when x=y=1
         data_PE_X['name'] = 'PE[0..{}]'.format(max(x_size-1,1)) # Exception case(incur Timeloop error); when x=y=1
 
+        data['architecture']['bank'] = hw_info.get_bank()
+        data['architecture']['group_density'] = hw_info.get_group_density()
+
         with open(file_name, "w") as f:
             yaml.dump(data, f)
         return file_name
 
-    def write_timeloop_problem(self, dimension, mapping_info, m_file=None, layer_id=0):
-        file_name = self.result_yaml_prob
+    def write_timeloop_problem(self, dimension, mapping_info, filename_=None, layer_id=0):
+        file_name = self.result_yaml_prob if filename_ is None else filename_
         example_file_name = self.example_yaml_prob
         with open(example_file_name, "r") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
 
         l2_size_ = mapping_info.get_mapping_L2_tile_size()
         l1_size_ = mapping_info.get_mapping_L1_tile_size()
+        pe_size_ = mapping_info.get_mapping_PE_tile_size()
         par_size_ = mapping_info.get_mapping_parallel_size()
-        dim_size_ = [i*j*l for (i,j,l) in zip(l2_size_, l1_size_, par_size_)]
+        dim_size_ = [i*j*l*k for (i,j,l,k) in zip(l2_size_, l1_size_, pe_size_, par_size_)]
+        #print(l2_size_, l1_size_, pe_size_, par_size_, dim_size_, mapping_info.mapping_gene_raw, mapping_info.mapping_tile_size, mapping_info.mapping_inner_tile_size)
         for i in range(0,6):
             if dim_size_[i] < dimension[i]:
-                print("Dim size must be large than problem dimension: ", dim_size_[i], dimension[i])
+                print("Dim size must be large than(or eqaul to) problem dimension: ", dim_size_[i], dimension[i])
                 raise 'Mapping Err'
         data['problem']['instance']['M'] = int(dim_size_[0])
         data['problem']['instance']['C'] = int(dim_size_[1])
@@ -94,13 +111,13 @@ class SparseloopEstimator():
             yaml.dump(data, f)
         return file_name
 
-    def write_timeloop_mapping(self, dimension, hw_info, mapping_info, m_file=None, layer_id=0):
+    def write_timeloop_mapping(self, dimension, hw_info, mapping_info, filename_=None, layer_id=0):
         if len(dimension) > 7:
             m_type = m_type_dicts[int(dimension[-1])]
         else:
             m_type = "CONV"
         # Dataflow description
-        file_name = self.result_yaml_map
+        file_name = self.result_yaml_map if filename_ is None else filename_
         example_file_name = self.example_yaml_map
         with open(example_file_name, "r") as f:
             mapping_data = yaml.load(f, Loader=yaml.FullLoader)
@@ -117,15 +134,27 @@ class SparseloopEstimator():
                                                                                             mapping_info.get_mapping_L2_tile_size()[3],
                                                                                             mapping_info.get_mapping_L2_tile_size()[4],
                                                                                             mapping_info.get_mapping_L2_tile_size()[5])
-        mapping_data_DRAM_temp['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[0]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[1]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[2]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[3]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[4]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_array_order()[5]))
+        mapping_data_DRAM_temp['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[0]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[1]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[2]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[3]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[4]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l2_order()[5]))
         #L2 map(=1)
-        mapping_data_L2_temp['factors'] = "M=1 C=1 P=1 Q=1 R=1 S=1 N=1"
-        mapping_data_L2_temp['permutation'] = "SRQPCMN"
+        #mapping_data_L2_temp['factors'] = "M=1 C=1 P=1 Q=1 R=1 S=1 N=1"
+        mapping_data_L2_temp['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L1_tile_size()[0],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[1],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[2],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[3],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[4],
+                                                                                            mapping_info.get_mapping_L1_tile_size()[5])
+        mapping_data_L2_temp['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[0]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[1]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[2]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[3]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[4]),
+                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[5]))
+
 
 
         #L1 map(=1)
@@ -137,34 +166,38 @@ class SparseloopEstimator():
         hw_map[hw_info.get_YDim()] = hw_info.get_Y()
         hw_map[hw_info.get_XDim()] = hw_info.get_X()
         mapping_data_L1_spat['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(hw_map[0],hw_map[1],hw_map[2],hw_map[3],hw_map[4],hw_map[5])
-        mapping_data_L1_spat['permutation'] = "SRQPCMN"
+        mapping_data_L1_spat['permutation'] = "SRPQCMN"
 
-        mapping_data_Buf['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_L1_tile_size()[0],
-                                                                                            mapping_info.get_mapping_L1_tile_size()[1],
-                                                                                            mapping_info.get_mapping_L1_tile_size()[2],
-                                                                                            mapping_info.get_mapping_L1_tile_size()[3],
-                                                                                            mapping_info.get_mapping_L1_tile_size()[4],
-                                                                                            mapping_info.get_mapping_L1_tile_size()[5])
-        mapping_data_Buf['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[0]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[1]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[2]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[3]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[4]),
-                                                                            DIM.to_str_timeloop(mapping_info.get_mapping_pe_order()[5]))
+        mapping_data_Buf['factors'] = "M={} C={} P={} Q={} R={} S={} N=1".format(mapping_info.get_mapping_PE_tile_size()[0],
+                                                                                            mapping_info.get_mapping_PE_tile_size()[1],
+                                                                                            mapping_info.get_mapping_PE_tile_size()[2],
+                                                                                            mapping_info.get_mapping_PE_tile_size()[3],
+                                                                                            mapping_info.get_mapping_PE_tile_size()[4],
+                                                                                            mapping_info.get_mapping_PE_tile_size()[5])
+        #mapping_data_Buf['factors'] = "M=1 C=1 P=1 Q=1 R=1 S=1 N=1"
+        
+        ##############FIXME!!!!! -> add pe order?
+        mapping_data_Buf['permutation'] = "SRQPCMN"
+        #mapping_data_Buf['permutation'] = "N{}{}{}{}{}{}".format(DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[0]),
+        #                                                                    DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[1]),
+        #                                                                    DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[2]),
+        #                                                                    DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[3]),
+        #                                                                    DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[4]),
+        #                                                                    DIM.to_str_timeloop(mapping_info.get_mapping_l1_order()[5]))
 
         with open(file_name, "w") as f:
             yaml.dump(mapping_data, f)
         return file_name
 
-    def write_timeloop_sparseopt(self, dimension, hw_info, mapping_info):
-        file_name = self.result_yaml_sparseopt
+    def write_timeloop_sparseopt(self, dimension, hw_info, mapping_info, filename_=None):
+        file_name = self.result_yaml_sparseopt if filename_ is None else filename_
         example_file_name = self.example_yaml_sparseopt
         with open(example_file_name, "r") as f:
             data = yaml.load(f, Loader=yaml.FullLoader)
 
         ## compression rank must be equal to Buffer temporal rank
         # get buffer temporal rank = (# of elet > 1) - (# of elt == 1)
-        rank_map = [i for i in mapping_info.get_mapping_L1_tile_size()]  #dim order
+        rank_map = [i for i in mapping_info.get_mapping_PE_tile_size()]  #dim order
         rank_map[hw_info.get_XDim()] *= hw_info.get_X()
         rank_map[hw_info.get_YDim()] *= hw_info.get_Y()
         compression_rank = (6 - rank_map.count(1))
@@ -196,7 +229,12 @@ class SparseloopEstimator():
         for i in range(lim):
             # Run timeloop
             m_file = main_m_file+"{}".format(i)
-            hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
+            try:
+                hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
+            except Exception as e:
+                # Invalid mapping
+                #print(e)
+                return None, (None, None), None
             hw_file_name = self.write_timeloop_hw(dimension[i], hw_info)
             map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info)
             prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info)
@@ -213,7 +251,9 @@ class SparseloopEstimator():
             if stderr != b'':
                 print("Output: \n", stdout.decode('ascii'))
                 print("Error Code: \n", stderr.decode('ascii'))
-                raise "Timeloop/MAESTRO compile error"
+                #raise "Timeloop/MAESTRO compile error"
+                # Invalid mapping
+                return None, (None, None), None
             process[i].wait()
 
         # Get timeloop result
@@ -266,11 +306,35 @@ class SparseloopEstimator():
             os.remove("./timeloop-model.stats.txt")  if os.path.exists("./timeloop-model.stats.txt") else None
             hw_info, mapping_info = self.gene2mapping(dimension[0], hw_gene[0], map_gene[0]) #lim must be 1
             if runtime <= 0 or energy <= 0: #Invalid
-                raise 'invalid'
+                raise
             if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
-                raise 'invalid'
+                raise
             return observation, judge(observation), estimated
         except:
-            raise "compile err?"
+            #raise "compile err?"
             # Invalid!
-            return None, None
+            return None, (None, None), None
+
+    def save_timeloop_def(self, dimension, hw_gene, map_gene, hw_file_name, map_file_name, prob_file_name, sparse_file_name):
+        lim = 1
+        dimension = [dimension]
+        hw_gene = [hw_gene]
+        map_gene = [map_gene]
+        if len(dimension[0]) < 8: #6 diemsion + density
+            raise "Model def don't contain density information"
+
+        process = []
+        main_m_file = self.random_file_name
+        for i in range(lim):
+            # Run timeloop
+            m_file = main_m_file+"{}".format(i)
+            try:
+                hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
+            except:
+                # Invalid mapping
+                return None, None, None, None
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, filename_=hw_file_name)
+            map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=map_file_name)
+            prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info, filename_=prob_file_name)
+            sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=sparse_file_name)
+

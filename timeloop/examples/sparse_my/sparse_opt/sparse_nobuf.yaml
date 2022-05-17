@@ -1,0 +1,40 @@
+sparse_optimizations:
+  targets:
+#    - name: L2            # component name in architecture
+#      action-optimization:    # keyword for *explicit* storage level optimization
+#        - type: skipping      # optimization type: either "gating" or "skipping"
+#          target: Weights           # the tensor to perform optimization on
+#          condition-on: [ Inputs ] # the tensor that the optimization is based on
+#        - type: skipping
+#          target: Outputs
+#          condition-on: [ Inputs ]
+    - name: L1
+      representation-format:  # key word for "format" optimization
+        data-spaces:
+          - name: Inputs           # tensor name
+            ranks:            # points to a list of ranks in fibertree representation
+              - format: UB    # Uncompressed Bitmask
+              - format: UB    # Uncompressed Bitmask
+              - format: UB    # Uncompressed Bitmask
+      action-optimization:    # keyword for *explicit* storage level optimization
+        - type: skipping      # optimization type: either "gating" or "skipping"
+          target: Weights           # the tensor to perform optimization on
+          condition-on: [ Inputs ] # the tensor that the optimization is based on
+        - type: skipping
+          target: Outputs
+          condition-on: [ Inputs ]
+#    - name: Buffer
+##      representation-format:  # key word for "format" optimization
+##        data-spaces:
+##          - name: Inputs           # tensor name
+##            ranks:            # points to a list of ranks in fibertree representation
+##              - format: UB    # Uncompressed Bitmask
+##              - format: UB    # Uncompressed Bitmask
+##              - format: UB    # Uncompressed Bitmask
+#      action-optimization:    # keyword for *explicit* storage level optimization
+#        - type: skipping      # optimization type: either "gating" or "skipping"
+#          target: Weights           # the tensor to perform optimization on
+#          condition-on: [ Inputs ] # the tensor that the optimization is based on
+#        - type: skipping
+#          target: Outputs
+#          condition-on: [ Inputs ]

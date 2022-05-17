@@ -35,6 +35,6 @@ sparse_optimizations:
         - type: skipping      # optimization type: either "gating" or "skipping"
           target: Weights           # the tensor to perform optimization on
           condition-on: [ Inputs ] # the tensor that the optimization is based on
-        - type: skipping
-          target: Outputs
-          condition-on: [ Inputs ]
+#        - type: skipping
+#          target: Outputs
+#          condition-on: [ Inputs ]

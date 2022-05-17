@@ -1,0 +1,48 @@
+architecture:
+  version: 0.3
+  subtree:
+  - name: system
+    local:
+      - name: DRAM
+        class: DRAM
+        attributes:
+          type: LPDDR4 #->Mobile??
+          width: 64
+          block-size: 4
+          word-bits: 16
+    subtree:
+      - name: SIMD
+        attributes:
+          technology: 40nm
+        local:
+          - name: L2
+            class: regfile
+            attributes:
+              #depth: 65536
+              depth: 8839936
+              width: 8
+              #width: 32
+              block-size: 1
+              word-bits: 8
+              #word-bits: 32
+        subtree:
+          - name: PE[0..1023]
+            local:
+              - name: Buffer
+                class: regfile
+                attributes:
+                  #depth: 256
+                  depth: 25089
+                  width: 8
+                  #width: 32
+                  block-size: 1
+                  word-bits: 8
+                  #word-bits: 32
+                  meshX: 32
+              - name: MACC
+                class: intmac
+                #class: mac
+                attributes:
+                  datawidth: 8
+                  #datawidth: 32
+                  meshX: 32
