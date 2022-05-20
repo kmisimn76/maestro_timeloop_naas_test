@@ -1,0 +1,75 @@
+architecture:
+  version: 0.3
+  subtree:
+  - name: system
+    local:
+      - name: DRAM
+        class: DRAM
+        attributes:
+          width: 8
+          block-size: 1
+          word-bits: 8 #output also is INT8
+          read_bandwidth: 6
+          write_bandwidth: 0.9
+    subtree:
+      - name: SIMD
+        attributes:
+          technology: 40nm
+        local:
+          - name: L2
+            class: regfile
+            attributes:
+              #depth: 65536
+              depth: 8839936
+              width: 8
+              #width: 32
+              block-size: 1
+              word-bits: 8
+              #word-bits: 32
+              read_bandwidth: 128
+              write_bandwidth: 24
+        subtree:
+          - name: SIMDCore
+            local:
+              - name: L1
+                class: regfile
+                #class: storage
+                #subclass: regfile_metadata
+                attributes:
+                  #depth: 256
+                  depth: 25089
+                  width: 8
+                  #width: 32
+                  block-size: 1
+                  word-bits: 8
+                  data_storage_depth: 640      # depth of the data storage only
+                  data_storage_width: 8       # width of the data storage only
+                  metadata_storage_depth: 25089  # depth of the metadata storage only
+                  metadata_storage_width: 4   # width of the metadata storage only
+                  metadata_datawidth: 4       # metadata's datawidth (can be different from datawidth)
+                  #word-bits: 32
+            subtree:
+              - name: PErow[0..15]
+                subtree:
+                  - name: PE[0..15]
+                    local:
+                      - name: Buffer
+                        class: regfile
+                        attributes:
+                          #depth: 256
+                          depth: 25089
+                          width: 8
+                          #width: 32
+                          block-size: 1
+                          word-bits: 8
+                          data_storage_depth: 640      # depth of the data storage only
+                          data_storage_width: 8       # width of the data storage only
+                          metadata_storage_depth: 320  # depth of the metadata storage only
+                          metadata_storage_width: 4   # width of the metadata storage only
+                          metadata_datawidth: 4       # metadata's datawidth (can be different from datawidth)
+                      - name: MACC
+                        class: intmac
+                        #class: mac
+                        attributes:
+                          datawidth: 8
+                          #datawidth: 32

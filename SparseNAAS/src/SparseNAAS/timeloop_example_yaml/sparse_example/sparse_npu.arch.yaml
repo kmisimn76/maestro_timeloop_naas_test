@@ -28,6 +28,8 @@ architecture:
               block-size: 1
               word-bits: 8
               #word-bits: 32
+              read_bandwidth: 16
+              write_bandwidth: 16
         subtree:
           - name: SIMDCore
             local:

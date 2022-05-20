@@ -1,6 +1,6 @@
 architecture:
-  bank: 16
-  group_density: 1
+  bank: 5
+  group_density: 2
   subtree:
   - local:
     - attributes:
@@ -19,8 +19,10 @@ architecture:
       - attributes:
           block-size: 1
           depth: 883993600
+          read_bandwidth: 200
           width: 8
           word-bits: 8
+          write_bandwidth: 32
         class: regfile
         name: L2
       name: SIMD
@@ -40,7 +42,7 @@ architecture:
           name: L1
         name: SIMDCore
         subtree:
-        - name: PErow[0..15]
+        - name: PErow[0..7]
           subtree:
           - local:
             - attributes:
@@ -59,5 +61,5 @@ architecture:
                 datawidth: 8
               class: intmac
               name: MACC
-            name: PE[0..7]
+            name: PE[0..31]
   version: 0.3

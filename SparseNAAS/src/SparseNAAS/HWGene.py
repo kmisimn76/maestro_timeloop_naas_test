@@ -42,7 +42,7 @@ class _HWGene(object):
         ParDimX = random.randint(1,6)
         ParDimR = random.randint(1,6)
         ParDimS = random.randint(1,6)
-        Density = random.randint(0,4)
+        Density = random.randint(1,3)
         Bank    = random.randint(1,16)
         return [L2Buf, L1Buf, PEs, BW, NumDim,
                     DimSize0, DimSize1, DimSize2,
@@ -131,7 +131,6 @@ class TIMELOOP_HW:
         #dim_size = [2**(round(hw_gene[HW_GENE.NUM_PE]**x)) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
         sum_dim = hw_gene[HW_GENE.DIM_SIZE_0] + hw_gene[HW_GENE.DIM_SIZE_1] #+ hw_gene[HW_GENE.DIM_SIZE_2]
         dim_size = [2**(round(hw_gene[HW_GENE.NUM_PE]*(x/sum_dim))) for x in [hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]]] #get dim size from encoding vector
-        print(dim_size)
         x = dim_size[0]
         y = dim_size[1]
         xdim = selected_hw_dim[0][0]

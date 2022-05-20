@@ -91,6 +91,10 @@ class Constraint_AlveoU200_Sparse:
                                         estimated['l2_weight'], estimated['l2_input'], estimated['l2_output'])
         used_dsp = self.__compute_DSP_usage(hw_info.get_X(), hw_info.get_Y())
         #print(used_bram, used_dsp)
+        #print(hw_map, K,C,WH)
+        #print(self.L1wt_bank, self.L1in_bank, self.L1out_bank)
+        #print(self.L2wt_bank, self.L2in_bank, self.L2out_bank)
+        #print(self.L1wt_levg, self.L1in_levg, self.L1out_levg)
         if used_bram > self.BRAM_max_size: #Invalid
             return False
         if used_dsp > self.DSP_max_size: #Invalid
@@ -111,22 +115,25 @@ if __name__ == "__main__":
     buffer_input = 1
     buffer_output = 1
     l1_weight = 256
-    l1_input = 4096
-    l1_output = 4096
-    l2_weight = 147456
-    l2_input = 41472
-    l2_output = 32768
-    PEX=8
-    PEY=8
-    density = 2
-    bank = 1
+    l1_input = 409
+    l1_output = 409
+    l2_weight = 14745
+    l2_input = 4305#41472
+    l2_output = 4014#32768
+    PEX=16
+    PEY=16
+    density = int(math.log(2, 2)) #int(math.log(4, 2))
+    bank = 4
     constraint = Constraint_AlveoU200_Sparse(group_density=density, bank=bank)
-    print(PEX,PEY,density, bank)
     estimated = {'util': util, 'cycle': runtime, 'energy': energy, 'area': area, 'mac': mac, 'power': power,
                   'buffer_weight': buffer_weight, 'buffer_input': buffer_input, 'buffer_output': buffer_output,
                   'l1_weight': l1_weight, 'l1_input': l1_input, 'l1_output': l1_output,
                   'l2_weight': l2_weight, 'l2_input': l2_input, 'l2_output': l2_output }
     hw_info = TIMELOOP_HW()
-    hw_info.set_HW(PEX, PEY, 0, 1, 0, 0)
+    gene = [3000, 100, 8, 50, 2, 0.4, 0.6, 0.5, 6,5,4,3,2,1, density, bank]
+    hw_info.set_HW(gene)
     mapping_info = None
+    constraint.set_constraint(group_density=2**density, bank=bank)
+    print(PEX,PEY,2**density, bank)
+    print(hw_info.get_X(), hw_info.get_Y())
     print(constraint.check_constraints(estimated, hw_info, mapping_info))

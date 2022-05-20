@@ -79,11 +79,21 @@ class SparseloopEstimator():
         data['architecture']['bank'] = hw_info.get_bank()
         data['architecture']['group_density'] = hw_info.get_group_density()
 
+        hw_map = [1 for i in range(0,6)]  #dim order
+        hw_map[hw_info.get_YDim()] = hw_info.get_Y()
+        hw_map[hw_info.get_XDim()] = hw_info.get_X()
+        bank = hw_info.get_bank()
+        input_bandwidth  = max(hw_map[DIM.C], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.K]==1 else bank)
+        weight_bandwidth = max(hw_map[DIM.K], hw_map[DIM.C]) * (1 if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else bank)
+        output_bandwidth = max(hw_map[DIM.K], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.C]==1 else bank)
+        data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth
+        data_L2['attributes']['write_bandwidth'] = output_bandwidth
+
         with open(file_name, "w") as f:
             yaml.dump(data, f)
         return file_name
 
-    def write_timeloop_problem(self, dimension, mapping_info, filename_=None, layer_id=0):
+    def write_timeloop_problem(self, dimension, hw_info, mapping_info, filename_=None, layer_id=0):
         file_name = self.result_yaml_prob if filename_ is None else filename_
         example_file_name = self.example_yaml_prob
         with open(example_file_name, "r") as f:
@@ -105,14 +115,15 @@ class SparseloopEstimator():
         data['problem']['instance']['Q'] = int(dim_size_[3])
         data['problem']['instance']['R'] = int(dim_size_[4])
         data['problem']['instance']['S'] = int(dim_size_[5])
-        data['problem']['instance']['densities']['Inputs']['density'] = float(dimension[6]) # density
+        sparsity_group_index = int(math.log(hw_info.get_group_density(), 2)) # group_density 1,2,4,8,16 -> idx 0,1,2,3,4
+        data['problem']['instance']['densities']['Inputs']['density'] = float(dimension[6+sparsity_group_index]) # density
 
         with open(file_name, "w") as f:
             yaml.dump(data, f)
         return file_name
 
     def write_timeloop_mapping(self, dimension, hw_info, mapping_info, filename_=None, layer_id=0):
-        if len(dimension) > 7:
+        if len(dimension) > 11:
             m_type = m_type_dicts[int(dimension[-1])]
         else:
             m_type = "CONV"
@@ -210,7 +221,7 @@ class SparseloopEstimator():
             yaml.dump(data, f)
         return file_name
 
-    def observe_timeloop(self, dimension, hw_gene, map_gene, judge, target_constraint, firsttime=False, multi=False):
+    def observe_timeloop(self, dimension, hw_gene, map_gene, judge, target_constraint, thread_id=None, firsttime=False, multi=False):
         if multi==True:
             if (len(dimension) != len(hw_gene)) or (len(dimension) != len(map_gene)):
                 raise "Invalid Argument"
@@ -223,6 +234,7 @@ class SparseloopEstimator():
             map_gene = [map_gene]
         if len(dimension[0]) < 8: #6 diemsion + density
             raise "Model def don't contain density information"
+        result_dir = "./timeloop_result/result_{}/".format('' if thread_id is None else thread_id)
 
         process = []
         main_m_file = self.random_file_name
@@ -235,22 +247,24 @@ class SparseloopEstimator():
                 # Invalid mapping
                 #print(e)
                 return None, (None, None), None
-            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info)
-            map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info)
-            prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info)
-            sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info)
-            os.remove("./timeloop-model.map+stats.xml") if os.path.exists("./timeloop-model.map+stats.xml") else None
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, filename_=None if thread_id is None else self.result_yaml_hw+str(thread_id))
+            map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_map+str(thread_id))
+            prob_file_name = self.write_timeloop_problem(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_prob+str(thread_id))
+            sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_sparseopt+str(thread_id))
+            os.remove(result_dir+"timeloop-model.map+stats.xml") if os.path.exists(result_dir+"timeloop-model.map+stats.xml") else None
+            os.makedirs(result_dir) if os.path.exists(result_dir) is False else None
             command = ["../../../timeloop/build/timeloop-model",
                     hw_file_name,
                     prob_file_name,
                     map_file_name,
-                    sparse_file_name]
+                    sparse_file_name,
+                    "-o", result_dir]
             process.append(Popen(command, stdout=PIPE, stderr=PIPE))
         for i in range(lim):
             stdout, stderr = process[i].communicate()
             if stderr != b'':
-                print("Output: \n", stdout.decode('ascii'))
-                print("Error Code: \n", stderr.decode('ascii'))
+                #print("Output: \n", stdout.decode('ascii'))
+                #print("Error Code: \n", stderr.decode('ascii'))
                 #raise "Timeloop/MAESTRO compile error"
                 # Invalid mapping
                 return None, (None, None), None
@@ -259,7 +273,7 @@ class SparseloopEstimator():
         # Get timeloop result
         try:
             import xml.etree.ElementTree as elemTree
-            timeloop_stat = elemTree.parse('./timeloop-model.map+stats.xml').getroot()
+            timeloop_stat = elemTree.parse(result_dir+'timeloop-model.map+stats.xml').getroot()
             timeloop_stat_item_px_macc = timeloop_stat[0][0][0][2][0]
             timeloop_stat_item_px_buffer = timeloop_stat[0][0][0][3][0]
             timeloop_stat_item_px_l1 = timeloop_stat[0][0][0][4][0]
@@ -269,7 +283,7 @@ class SparseloopEstimator():
                      or timeloop_stat_item_px_l2[2][0][0].text!='L2' or timeloop_stat_item_px_dram[2][0][0].text!='DRAM':
                 print("timeloop output error ???")
                 raise "timeloop output error"
-            f = open("./timeloop-model.stats.txt", "r")
+            f = open(result_dir+"timeloop-model.stats.txt", "r")
             while True:
                 line = f.readline()
                 if not line: break
@@ -301,18 +315,20 @@ class SparseloopEstimator():
                         'l1_weight': l1_weight, 'l1_input': l1_input, 'l1_output': l1_output,
                         'l2_weight': l2_weight, 'l2_input': l2_input, 'l2_output': l2_output }
 
-            os.remove("./timeloop-model.map+stats.xml")  if os.path.exists("./timeloop-model.map+stats.xml") else None
-            os.remove("./timeloop-model.map.txt")  if os.path.exists("./timeloop-model.map.txt") else None
-            os.remove("./timeloop-model.stats.txt")  if os.path.exists("./timeloop-model.stats.txt") else None
+            os.remove(result_dir+"timeloop-model.map+stats.xml")  if os.path.exists(result_dir+"timeloop-model.map+stats.xml") else None
+            os.remove(result_dir+"timeloop-model.map.txt")  if os.path.exists(result_dir+"timeloop-model.map.txt") else None
+            os.remove(result_dir+"timeloop-model.stats.txt")  if os.path.exists(result_dir+"timeloop-model.stats.txt") else None
             hw_info, mapping_info = self.gene2mapping(dimension[0], hw_gene[0], map_gene[0]) #lim must be 1
+            target_constraint.set_constraint(group_density=hw_info.get_group_density(), bank=hw_info.get_bank())
             if runtime <= 0 or energy <= 0: #Invalid
-                raise
+                raise Exception('invalid map: runtime')
             if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
-                raise
+                raise Exception('invalid map: constraint')
             return observation, judge(observation), estimated
-        except:
+        except Exception as e:
             #raise "compile err?"
             # Invalid!
+            #print(e)
             return None, (None, None), None
 
     def save_timeloop_def(self, dimension, hw_gene, map_gene, hw_file_name, map_file_name, prob_file_name, sparse_file_name):
@@ -335,6 +351,12 @@ class SparseloopEstimator():
                 return None, None, None, None
             hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, filename_=hw_file_name)
             map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=map_file_name)
-            prob_file_name = self.write_timeloop_problem(dimension[i], mapping_info, filename_=prob_file_name)
+            prob_file_name = self.write_timeloop_problem(dimension[i], hw_info, mapping_info, filename_=prob_file_name)
             sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=sparse_file_name)
+
+    def get_gene_HW_info(self, dimension, hw_gene, map_gene):
+        hw_info, mapping_info = self.gene2mapping(dimension, hw_gene, map_gene)
+        return [DIM.to_str(hw_info.get_XDim()), hw_info.get_X(), \
+                DIM.to_str(hw_info.get_YDim()), hw_info.get_Y(), \
+                hw_info.get_group_density(), hw_info.get_bank()]
 

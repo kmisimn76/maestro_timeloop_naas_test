@@ -1,0 +1,65 @@
+architecture:
+  bank: 5
+  group_density: 2
+  subtree:
+  - local:
+    - attributes:
+        block-size: 1
+        read_bandwidth: 6
+        width: 8
+        word-bits: 8
+        write_bandwidth: 0.9
+      class: DRAM
+      name: DRAM
+    name: system
+    subtree:
+    - attributes:
+        technology: 40nm
+      local:
+      - attributes:
+          block-size: 1
+          depth: 883993600
+          read_bandwidth: 192
+          width: 8
+          word-bits: 8
+          write_bandwidth: 40
+        class: regfile
+        name: L2
+      name: SIMD
+      subtree:
+      - local:
+        - attributes:
+            block-size: 1
+            data_storage_depth: 640
+            data_storage_width: 8
+            depth: 250890000
+            metadata_datawidth: 4
+            metadata_storage_depth: 620000000
+            metadata_storage_width: 4
+            width: 8
+            word-bits: 8
+          class: regfile
+          name: L1
+        name: SIMDCore
+        subtree:
+        - name: PErow[0..7]
+          subtree:
+          - local:
+            - attributes:
+                block-size: 1
+                data_storage_depth: 640
+                data_storage_width: 8
+                depth: 25089000
+                metadata_datawidth: 4
+                metadata_storage_depth: 3200000
+                metadata_storage_width: 4
+                width: 8
+                word-bits: 8
+              class: regfile
+              name: Buffer
+            - attributes:
+                datawidth: 8
+              class: intmac
+              name: MACC
+            name: PE[0..31]
+  version: 0.3
