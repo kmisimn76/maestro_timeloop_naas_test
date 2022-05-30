@@ -1,6 +1,6 @@
 architecture:
   bank: 2
-  group_density: 2
+  group_density: 4
   subtree:
   - local:
     - attributes:

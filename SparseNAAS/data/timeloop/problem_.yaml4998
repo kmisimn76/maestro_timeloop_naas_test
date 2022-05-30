@@ -3,17 +3,17 @@ problem:
     C: 132
     Hdilation: 1
     Hstride: 1
-    M: 128
+    M: 192
     N: 1
-    P: 28
-    Q: 32
+    P: 32
+    Q: 28
     R: 3
     S: 3
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.579712446
+        density: 0.80510677
         distribution: fixed-structured
   shape:
     coefficients:

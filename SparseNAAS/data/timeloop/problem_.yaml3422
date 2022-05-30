@@ -6,14 +6,14 @@ problem:
     M: 1024
     N: 1
     P: 14
-    Q: 16
+    Q: 32
     R: 1
     S: 1
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.47909755200000004
+        density: 0.726190542
         distribution: fixed-structured
   shape:
     coefficients:

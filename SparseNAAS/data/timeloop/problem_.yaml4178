@@ -1,12 +1,12 @@
 problem:
   instance:
-    C: 516
+    C: 522
     Hdilation: 1
     Hstride: 1
     M: 512
     N: 1
-    P: 14
-    Q: 16
+    P: 64
+    Q: 14
     R: 3
     S: 3
     Wdilation: 1

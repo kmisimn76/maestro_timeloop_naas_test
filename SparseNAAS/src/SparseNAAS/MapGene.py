@@ -133,6 +133,10 @@ class TIMELOOP_MAPPING:
         self.mapping_inner_tile_size[self.mapping_selected_hw_dim[1]] = 1
         self.mapping_inner_tile_size[4] = 1 #R,S PE tile is 1. except
         self.mapping_inner_tile_size[5] = 1 #R,S PE tile is 1. except
+        #if self.mapping_selected_hw_dim[0]==DIM.X or self.mapping_selected_hw_dim[1]==DIM.X: # when in/output stationary
+        #    self.mapping_inner_tile_size[DIM.Y] = 1 # to tile
+        #if self.mapping_selected_hw_dim[0]==DIM.Y or self.mapping_selected_hw_dim[1]==DIM.Y: # when in/output stationary
+        #    self.mapping_inner_tile_size[DIM.X] = 1 # to tile
 
         self.l2_tile_size = [int(math.ceil(self.l_info_hw[i]/self.mapping_tile_size[i])) for i in range(0,6)]
         #self.l2_tile_size[self.mapping_selected_hw_dim[0]] = int(self.l_info_hw[self.mapping_selected_hw_dim[0]]/self.mapping_tile_size[self.mapping_selected_hw_dim[0]])+1

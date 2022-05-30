@@ -3,17 +3,17 @@ problem:
     C: 64
     Hdilation: 1
     Hstride: 1
-    M: 80
+    M: 64
     N: 1
-    P: 56
-    Q: 56
+    P: 132
+    Q: 64
     R: 3
     S: 3
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.733393176
+        density: 0.89638758
         distribution: fixed-structured
   shape:
     coefficients:

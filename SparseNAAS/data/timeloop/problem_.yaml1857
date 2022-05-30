@@ -13,7 +13,7 @@ problem:
     Wstride: 1
     densities:
       Inputs:
-        density: 0.778638589
+        density: 0.8848298990000001
         distribution: fixed-structured
   shape:
     coefficients:

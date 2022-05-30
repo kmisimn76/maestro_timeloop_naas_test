@@ -1,13 +1,13 @@
 problem:
   instance:
-    C: 32
+    C: 3
     Hdilation: 1
     Hstride: 1
-    M: 64
+    M: 70
     N: 1
-    P: 225
-    Q: 336
-    R: 10
+    P: 256
+    Q: 224
+    R: 7
     S: 7
     Wdilation: 1
     Wstride: 1

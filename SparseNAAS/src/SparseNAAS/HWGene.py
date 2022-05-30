@@ -28,6 +28,7 @@ class _HWGene(object):
         L2Buf = random.randint(1, 1000)
         L1Buf = random.randint(1, 1000)
         PEs = random.randint(1, 8) #300
+        #PEs = random.randint(8, 8) #300
         BW = random.randint(1,1000)
         NumDim = random.randint(2,2) #FIXME : Hardcoding, Fix NumDim to 2
         #DimSize0 = random.randint(1,16*16)
@@ -42,8 +43,9 @@ class _HWGene(object):
         ParDimX = random.randint(1,6)
         ParDimR = random.randint(1,6)
         ParDimS = random.randint(1,6)
-        Density = random.randint(1,3)
-        Bank    = random.randint(1,16)
+        Density = random.randint(1,3) # power of 2
+        #Bank    = random.randint(1,16)
+        Bank    = random.randint(1,4) # power of 2
         return [L2Buf, L1Buf, PEs, BW, NumDim,
                     DimSize0, DimSize1, DimSize2,
                     ParDimK, ParDimC, ParDimY, ParDimX, ParDimR, ParDimS, Density, Bank]
@@ -73,8 +75,8 @@ class _HWGene(object):
 
     #HWGene
     def mutation(self, offsprings,rate=0.05):
-        rand_list = self.generate_random_gene()
         for idx in range(offsprings.shape[0]):
+            rand_list = self.generate_random_gene()
             for p in range(offsprings.shape[1]):
                 if random.random() < rate:
                     offsprings[idx][p] = rand_list[p]
@@ -138,7 +140,8 @@ class TIMELOOP_HW:
         l2_size = hw_gene[HW_GENE.L2_SIZE]
         l1_size = hw_gene[HW_GENE.L1_SIZE]
         density = 2**(int(hw_gene[HW_GENE.GROUP_DENSITY] ))
-        bank = int(hw_gene[HW_GENE.BANK])
+        #bank = int(hw_gene[HW_GENE.BANK])
+        bank = 2**int(hw_gene[HW_GENE.BANK])
         self.dim_size = dim_size
         self.X = x
         self.Y = y

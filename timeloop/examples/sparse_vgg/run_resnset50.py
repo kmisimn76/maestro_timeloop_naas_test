@@ -26,7 +26,8 @@ def save_prob(result_yaml_prob, example_yaml_prob, layer_info):
     data['problem']['instance']['Q'] = int(layer_info[3])
     data['problem']['instance']['R'] = int(layer_info[4])
     data['problem']['instance']['S'] = int(layer_info[5])
-    data['problem']['instance']['densities']['Inputs']['density'] = layer_info[8] # density
+    #data['problem']['instance']['densities']['Inputs']['density'] = layer_info[7] # grp2 density
+    data['problem']['instance']['densities']['Inputs']['density'] = layer_info[8] # grp4 density
 
     with open(file_name, "w") as f:
         yaml.dump(data, f)
@@ -59,10 +60,14 @@ def save_map(result_yaml_map, example_yaml_map, layer_info):
     TILESIZE_W = 14 if W>=14 else 7
     TILESIZE_H = 14 if H>=14 else 7
 
-    L1_TILENUM_K = 16 if K/16>=16 else (8 if K/16>=8 else (4 if K/16>=4 else (2 if K/16>=2 else 1)))
-    L1_TILENUM_C = 16 if C/16>=16 else (8 if C/16>=8 else (4 if C/16>=4 else (2 if C/16>=2 else 1)))
-    L1_TILENUM_H = 8 if H/TILESIZE_H>=8 else (4 if H/TILESIZE_H>=4 else (2 if H/TILESIZE_H>=2 else 1))
-    L1_TILENUM_W = 8 if W/TILESIZE_W>=8 else (4 if W/TILESIZE_W>=4 else (2 if W/TILESIZE_W>=2 else 1))
+    #L1_TILENUM_K = 16 if K/16>=16 else (8 if K/16>=8 else (4 if K/16>=4 else (2 if K/16>=2 else 1)))
+    #L1_TILENUM_C = 16 if C/16>=16 else (8 if C/16>=8 else (4 if C/16>=4 else (2 if C/16>=2 else 1)))
+    #L1_TILENUM_H = 8 if H/TILESIZE_H>=8 else (4 if H/TILESIZE_H>=4 else (2 if H/TILESIZE_H>=2 else 1))
+    #L1_TILENUM_W = 8 if W/TILESIZE_W>=8 else (4 if W/TILESIZE_W>=4 else (2 if W/TILESIZE_W>=2 else 1))
+    L1_TILENUM_K = 4 if K/16>=4 else (2 if K/16>=2 else 1)
+    L1_TILENUM_C = 4 if C/16>=4 else (2 if C/16>=2 else 1)
+    L1_TILENUM_H = 1
+    L1_TILENUM_W = 1
     L1_TILENUM_R = 3 if R==3 else 1
     L1_TILENUM_S = 3 if S==3 else 1
 

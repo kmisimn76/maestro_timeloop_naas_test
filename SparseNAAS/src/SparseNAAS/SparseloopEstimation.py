@@ -83,9 +83,19 @@ class SparseloopEstimator():
         hw_map[hw_info.get_YDim()] = hw_info.get_Y()
         hw_map[hw_info.get_XDim()] = hw_info.get_X()
         bank = hw_info.get_bank()
-        input_bandwidth  = max(hw_map[DIM.C], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.K]==1 else bank)
-        weight_bandwidth = max(hw_map[DIM.K], hw_map[DIM.C]) * (1 if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else bank)
-        output_bandwidth = max(hw_map[DIM.K], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.C]==1 else bank)
+
+        #old
+        #input_bandwidth  = max(hw_map[DIM.C], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.K]==1 else bank)
+        #weight_bandwidth = max(hw_map[DIM.K], hw_map[DIM.C]) * (1 if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else bank)
+        #output_bandwidth = max(hw_map[DIM.K], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.C]==1 else bank)
+        #new
+        WEIGHT_STATIONARY = True if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else False
+        OUTPUT_STATIONARY = True if (hw_map[DIM.C]==1) else False
+        INPUT_STATIONARY = True if (hw_map[DIM.K]==1) else False
+        input_bandwidth  = (hw_map[DIM.C] if WEIGHT_STATIONARY else max(hw_map[DIM.X],hw_map[DIM.Y])) * (1 if INPUT_STATIONARY else bank)
+        weight_bandwidth = (hw_map[DIM.C] if INPUT_STATIONARY  else hw_map[DIM.K]) * (1 if WEIGHT_STATIONARY else bank)
+        output_bandwidth = (hw_map[DIM.K] if WEIGHT_STATIONARY else max(hw_map[DIM.X],hw_map[DIM.Y])) * (1 if OUTPUT_STATIONARY else bank)
+
         data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth
         data_L2['attributes']['write_bandwidth'] = output_bandwidth
 
@@ -221,7 +231,7 @@ class SparseloopEstimator():
             yaml.dump(data, f)
         return file_name
 
-    def observe_timeloop(self, dimension, hw_gene, map_gene, judge, target_constraint, thread_id=None, firsttime=False, multi=False):
+    def observe_timeloop(self, gen, dimension, hw_gene, map_gene, judge, target_constraint, thread_id=None, firsttime=False, multi=False):
         if multi==True:
             if (len(dimension) != len(hw_gene)) or (len(dimension) != len(map_gene)):
                 raise "Invalid Argument"
@@ -323,6 +333,7 @@ class SparseloopEstimator():
             if runtime <= 0 or energy <= 0: #Invalid
                 raise Exception('invalid map: runtime')
             if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
+                #if gen<10: # ignore resource check before fore generation
                 raise Exception('invalid map: constraint')
             return observation, judge(observation), estimated
         except Exception as e:

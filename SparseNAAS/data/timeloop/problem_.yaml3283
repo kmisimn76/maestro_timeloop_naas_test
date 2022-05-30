@@ -1,19 +1,19 @@
 problem:
   instance:
-    C: 2050
+    C: 2080
     Hdilation: 1
     Hstride: 1
     M: 512
     N: 1
-    P: 7
-    Q: 8
+    P: 8
+    Q: 9
     R: 1
     S: 1
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.384274465
+        density: 0.605937929
         distribution: fixed-structured
   shape:
     coefficients:

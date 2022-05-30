@@ -221,7 +221,7 @@ class MaestroEnvironment(object):
             for n_ in range(thread_number):
                 rand_gene.append(HWGene.generate_random_gene())
                 #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
-                t = Process(target=self.exterior_search, args=(self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
+                t = Process(target=self.exterior_search, args=(0, self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
                 t.start()
                 threads.append(t)
             for t in threads:
@@ -247,7 +247,10 @@ class MaestroEnvironment(object):
             for n_ in range(thread_number):
                 rand_gene.append(MapGene.generate_random_gene())
                 #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[0], sample_hw_gene, rand_gene[n_], n_, que))
-                t = Process(target=self.exterior_search, args=(self.model_defs[0], sample_hw_gene, rand_gene[n_], n_, que))
+                #t = Process(target=self.exterior_search, args=(self.model_defs[0], sample_hw_gene, rand_gene[n_], n_, que))
+                ly_n = random.randint(0, num_layers-1)
+                h_g_n = random.randint(0, num_pop-1)
+                t = Process(target=self.exterior_search, args=(0, self.model_defs[ly_n], hw_new_population[h_g_n], rand_gene[n_], n_, que))
                 t.start()
                 threads.append(t)
             for t in threads:
@@ -276,7 +279,7 @@ class MaestroEnvironment(object):
         '''
         return hw_new_population, map_new_population
 
-    def get_fitness(self, num_pop, num_layers, hw_new_population, map_new_population):
+    def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
         # get HW/Mapping fitness
         hw_fitness = np.empty(num_pop, float)
         map_fitness = np.empty((num_layers, num_pop), float)
@@ -297,7 +300,7 @@ class MaestroEnvironment(object):
                 hw_gene = hw_new_population[i]
                 map_gene = map_new_population[j][i]
                 #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
-                t = Process(target=self.exterior_search, args=(self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
+                t = Process(target=self.exterior_search, args=(gen, self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
                 t.start()
                 threads.append(t)
                 n_ += 1
@@ -388,10 +391,10 @@ class MaestroEnvironment(object):
         logger.addHandler(output_file_handler)
         logger.addHandler(stdout_handler)
 
-        epochs = 10000#3600 #hardcoded
+        epochs = 3000#3600 #hardcoded
         num_pop = 100#60 #hardcoded
         num_gen = epochs // num_pop
-        num_parents = 10#30 #hardcoded
+        num_parents = 40#30 #hardcoded
         self.fd = fd
         self.chkpt_file = chkpt_file
         self.start_range = start_range
@@ -425,7 +428,7 @@ class MaestroEnvironment(object):
         #hw_fitness = self.get_HW_fitness(num_pop, num_layers, hw_new_population, map_new_population)
         #logger.debug("\n\n\n")
         #map_fitness = self.get_Mapping_fitness(num_pop, num_layers, hw_new_population, map_new_population)
-        hw_fitness, map_fitness = self.get_fitness(num_pop, num_layers, hw_new_population, map_new_population)
+        hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
         logger.debug("\n\n\n\n")
 
         # HW -> Mapping Opt.
@@ -438,7 +441,7 @@ class MaestroEnvironment(object):
 
             offspring_crossover = HWGene.crossover(parents,
                                             num_pop-num_parents)
-            offspring_mutation = HWGene.mutation(offspring_crossover)
+            offspring_mutation = HWGene.mutation(offspring_crossover, rate=0.1)
 
             hw_new_population[0:parents.shape[0], :] = parents
             hw_new_population[parents.shape[0]:, :] = offspring_mutation
@@ -448,12 +451,12 @@ class MaestroEnvironment(object):
                                                         num_parents)
                 offspring_crossover = MapGene.crossover(parents,
                                                         num_pop-num_parents)
-                offspring_mutation = MapGene.mutation(offspring_crossover)
+                offspring_mutation = MapGene.mutation(offspring_crossover, rate=0.1)
 
                 map_new_population[lr_i][0:parents.shape[0], :] = parents
                 map_new_population[lr_i][parents.shape[0]:, :] = offspring_mutation
 
-            hw_fitness, map_fitness = self.get_fitness(num_pop, num_layers, hw_new_population, map_new_population)
+            hw_fitness, map_fitness = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
             for pop in range(num_pop):
                 reward = hw_fitness[pop]
                 if reward > self.best_reward:
@@ -591,7 +594,7 @@ class MaestroEnvironment(object):
             pickle.dump(chkpt, fd)
         # print(self.sol)
 
-    def exterior_search(self, layer_info, hw_gene, map_gene, thread_id=None, queue=None):
+    def exterior_search(self, gen, layer_info, hw_gene, map_gene, thread_id=None, queue=None):
         if self.fitness == "thrpt_ave" or self.fitness=="thrpt_naive":
             raise "Depleted"
         if self.fitness == "thrpt_btnk":
@@ -606,7 +609,7 @@ class MaestroEnvironment(object):
             if use_maestro is True:
                 reward, constraint = self.oberserve_maestro(layer_info, hw_gene, map_gene)
             else:
-                self.observation, (reward, constraint), estimated = self.timeloop_estimator.observe_timeloop(layer_info, hw_gene, map_gene, self.judge, self.fpga_constraint, thread_id=thread_id)
+                self.observation, (reward, constraint), estimated = self.timeloop_estimator.observe_timeloop(gen, layer_info, hw_gene, map_gene, self.judge, self.fpga_constraint, thread_id=thread_id)
             self.exp_table[table_entry] = (reward, constraint)
         if reward == None:
             queue.put((thread_id, None, None)) if queue is not None else None

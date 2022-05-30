@@ -1,6 +1,6 @@
 architecture:
-  bank: 2
-  group_density: 2
+  bank: 16
+  group_density: 4
   subtree:
   - local:
     - attributes:
@@ -19,7 +19,7 @@ architecture:
       - attributes:
           block-size: 1
           depth: 883993600
-          read_bandwidth: 64
+          read_bandwidth: 512
           width: 8
           word-bits: 8
           write_bandwidth: 16

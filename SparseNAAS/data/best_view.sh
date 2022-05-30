@@ -28,4 +28,8 @@ for entry in `ls -d best/*`; do
     grep "Cycles: " timeloop-model.stats.txt
     cd ../..
 done
+echo "L1 size"
+cat best/*/timeloop-model.map.txt  | grep L1
+echo "L2 size"
+cat best/*/timeloop-model.map.txt  | grep L2
 
