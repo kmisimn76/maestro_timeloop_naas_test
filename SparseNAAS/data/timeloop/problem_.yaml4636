@@ -5,8 +5,8 @@ problem:
     Hstride: 1
     M: 256
     N: 1
-    P: 48
-    Q: 54
+    P: 28
+    Q: 28
     R: 3
     S: 3
     Wdilation: 1

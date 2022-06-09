@@ -1,11 +1,11 @@
 problem:
   instance:
-    C: 1224
+    C: 1080
     Hdilation: 1
     Hstride: 1
-    M: 2048
+    M: 2688
     N: 1
-    P: 16
+    P: 14
     Q: 14
     R: 1
     S: 1

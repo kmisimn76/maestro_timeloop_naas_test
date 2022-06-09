@@ -139,8 +139,8 @@ class MaestroEnvironment(object):
 
     def get_ref_constraint(self, bound=action_bound):
         raise 'Depl'
-        sol = [bound[:self.n_action_steps] for i in range(len(self.model_defs))]
-        _, total_constraint = self.exterior_search(sol)
+        #sol = [bound[:self.n_action_steps] for i in range(len(self.model_defs))]
+        #_, total_constraint = self.exterior_search(sol)
         return total_constraint
     def set_constraint_value(self, max_constraint, min_constraint, constraint_value):
         self.constraint_value = constraint_value
@@ -312,8 +312,8 @@ class MaestroEnvironment(object):
             for thn_ in range(ln):
                 result_n_, reward_, constraint_ = que.get()
                 if reward_  == None or constraint_ > self.constraint_value:
-                    reward_ = float("-Inf")
-                    #constraint_ = float("-Inf")
+                    reward_ = float("-inf")
+                    #constraint_ = float("-inf")
                 i = result_n_//num_layers
                 j = result_n_%num_layers
                 reward[i][j] = reward_
@@ -326,8 +326,8 @@ class MaestroEnvironment(object):
             for j_ in range(num_layers):
                 n_, reward_, constraint_ = que.get()
                 if reward_  == None or constraint_ > self.constraint_value:
-                    reward_ = float("-Inf")
-                    #constraint_ = float("-Inf")
+                    reward_ = float("-inf")
+                    #constraint_ = float("-inf")
                 i = n_//num_layers
                 j = n_%num_layers
                 reward[i][j] = reward_
@@ -338,13 +338,17 @@ class MaestroEnvironment(object):
             tot_constraint = 0
             for j in range(num_layers):
                 map_fitness[j][i] = reward[i][j]
-                tot_reward += reward[i][j]
+                #print(map_fitness[j][i])
+                if reward[i][j] is float("-inf") or -(10**20)>reward[i][j] or tot_reward is float("-inf"):
+                    tot_reward = float("-inf")
+                else:
+                    tot_reward += reward[i][j]
                 tot_constraint = constraint[i][j]
-            if tot_reward is None or tot_reward is float("-Inf"): # Can't compilation
-                tot_reward = float("-Inf")
+            if tot_reward is None or tot_reward is float("-inf") or -(10**20)>tot_reward or tot_reward is float("inf"): # Can't compilation
+                tot_reward = float("-inf")
                 invalid_count += 1
             elif tot_constraint is None or tot_constraint > self.constraint_value:
-                tot_reward = float("-Inf")
+                tot_reward = float("-inf")
                 invalid_count += 1
             hw_fitness[i] = tot_reward
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
@@ -358,21 +362,21 @@ class MaestroEnvironment(object):
             for j in range(num_layers):
                 reward, constraint = self.exterior_search(self.model_defs[j], hw_gene, map_new_population[j][i])
                 if reward == None or constraint > self.constraint_value:
-                    reward = float("-Inf")
-                    #constraint = float("-Inf")
+                    reward = float("-inf")
+                    #constraint = float("-inf")
                 map_fitness[j][i] = reward
                 tot_reward += reward
                 tot_constraint = constraint
             reward = tot_reward
             total_used_constraint = tot_constraint
-            if reward is None or reward is float("-Inf"): # Can't compilation
-                reward = float("-Inf")
+            if reward is None or reward is float("-inf"): # Can't compilation
+                reward = float("-inf")
                 #print("Error with reward")
                 #print(new_population[i])
                 #exit(-1)
                 invalid_count += 1
             elif tot_constraint is None or total_used_constraint > self.constraint_value:
-                reward = float("-Inf")
+                reward = float("-inf")
                 invalid_count += 1
             hw_fitness[i] = reward
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
@@ -391,7 +395,7 @@ class MaestroEnvironment(object):
         logger.addHandler(output_file_handler)
         logger.addHandler(stdout_handler)
 
-        epochs = 3000#3600 #hardcoded
+        epochs = 7000#3600 #hardcoded
         num_pop = 100#60 #hardcoded
         num_gen = epochs // num_pop
         num_parents = 40#30 #hardcoded
@@ -401,11 +405,11 @@ class MaestroEnvironment(object):
         self.end_range = end_range-1
 
         if self.best_reward is None:
-            self.best_reward = float("-Inf")
+            self.best_reward = float("-inf")
         self.best_rewards = []
         for i in range(len(self.model_defs)):
             if self.map_best_reward[i] is None:
-                self.map_best_reward[i] = float("-Inf")
+                self.map_best_reward[i] = float("-inf")
         self.epoch = 0
         self.best_sol = (HWGene.get_sample_gene(), [MapGene.get_sample_gene()])
         num_layers = len(self.model_defs)
@@ -436,6 +440,8 @@ class MaestroEnvironment(object):
 
         for generation in range(num_gen):
             print("Gen ", generation)
+            if generation == 10:
+                    self.best_reward = float("-inf")
             best_gen_reward =None
             parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents)
 
@@ -462,7 +468,7 @@ class MaestroEnvironment(object):
                 if reward > self.best_reward:
                     best_gen_reward = reward
                     self.best_reward = reward
-                    self.best_reward_constraint = float("Inf") #total_used_constraint/num_layers
+                    self.best_reward_constraint = float("inf") #total_used_constraint/num_layers
                     self.best_sol = (hw_new_population[pop].copy(), [map_new_population[lr_i][pop].copy() for lr_i in range(num_layers)])
                 iteration += 1
                 self.best_rewards_iteration.append(iteration)
@@ -482,11 +488,11 @@ class MaestroEnvironment(object):
                         map_gene = map_new_population[lr_i][pop]
                         reward, used_constraint = self.exterior_search(self.model_defs[lr_i], hw_gene, map_gene)
                         if reward is None or used_constraint is None: # invalid mapping
-                            reward = float("-Inf")
-                            used_constraint = float("-Inf")
+                            reward = float("-inf")
+                            used_constraint = float("-inf")
                         elif used_constraint > self.constraint_value: # not met constraints
-                            reward = float("-Inf")
-                            used_constraint = float("-Inf")
+                            reward = float("-inf")
+                            used_constraint = float("-inf")
                         map_fitness[lr_i][pop] = reward
                         tot_hw_reward += reward
                         total_used_constraint += used_constraint
@@ -505,21 +511,21 @@ class MaestroEnvironment(object):
                         lr_i, reward, used_constraint = que.get()
                         #print(lr_i, reward, used_constraint)
                         if reward is None or used_constraint is None: # invalid mapping
-                            reward = float("-Inf")
-                            used_constraint = float("-Inf")
+                            reward = float("-inf")
+                            used_constraint = float("-inf")
                         elif used_constraint > self.constraint_value: # not met constraints
-                            reward = float("-Inf")
-                            used_constraint = float("-Inf")
+                            reward = float("-inf")
+                            used_constraint = float("-inf")
                         map_fitness[lr_i][pop] = reward
                         tot_hw_reward += reward
                         total_used_constraint += used_constraint
 
                 reward = tot_hw_reward
-                if reward is None or reward is float("-Inf"): # invalid mapping
-                    reward = float("-Inf")
+                if reward is None or reward is float("-inf"): # invalid mapping
+                    reward = float("-inf")
                     num_invalid_node += 1
                 elif total_used_constraint//num_layers > self.constraint_value: # not met constraints
-                    reward = float("-Inf")
+                    reward = float("-inf")
                     num_invalid_node += 1
                 if reward > self.best_reward:
                     best_gen_reward = reward
@@ -552,7 +558,7 @@ class MaestroEnvironment(object):
         total_reward = 0
         print("best reward each layer")
         for lr_i in range(num_layers):
-            reward, constraint = self.exterior_search(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
+            reward, constraint = self.exterior_search(num_gen-1, self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
             print(reward)
             total_reward += reward
             dir_name = '../../data/best/{:02d}'.format(lr_i)

@@ -16,6 +16,7 @@ sparse_optimizations:
               - format: UB    # Uncompressed Bitmask
               - format: UB    # Uncompressed Bitmask
               - format: UB    # Uncompressed Bitmask
+              - format: UB    # Uncompressed Bitmask
       action-optimization:    # keyword for *explicit* storage level optimization
         - type: skipping      # optimization type: either "gating" or "skipping"
           target: Weights           # the tensor to perform optimization on

@@ -79,7 +79,7 @@ class _MapGene(object):
             max_fitness_idx = np.where(fitness == np.max(fitness))
             max_fitness_idx = max_fitness_idx[0][0]
             parents[parent_num] = pop[max_fitness_idx]
-            fitness[max_fitness_idx] = float("-Inf")
+            fitness[max_fitness_idx] = float("-inf")
         return parents
 
     #MapGene

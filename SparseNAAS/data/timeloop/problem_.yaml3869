@@ -3,12 +3,12 @@ problem:
     C: 4
     Hdilation: 1
     Hstride: 1
-    M: 64
+    M: 128
     N: 1
     P: 224
     Q: 224
     R: 7
-    S: 7
+    S: 8
     Wdilation: 1
     Wstride: 1
     densities:

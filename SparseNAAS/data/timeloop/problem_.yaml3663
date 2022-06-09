@@ -5,8 +5,8 @@ problem:
     Hstride: 1
     M: 64
     N: 1
-    P: 64
-    Q: 196
+    P: 60
+    Q: 56
     R: 3
     S: 3
     Wdilation: 1

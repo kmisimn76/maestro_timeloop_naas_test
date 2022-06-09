@@ -19,10 +19,10 @@ architecture:
       - attributes:
           block-size: 1
           depth: 883993600
-          read_bandwidth: 80
+          read_bandwidth: 48
           width: 8
           word-bits: 8
-          write_bandwidth: 8
+          write_bandwidth: 64
         class: regfile
         name: L2
       name: SIMD

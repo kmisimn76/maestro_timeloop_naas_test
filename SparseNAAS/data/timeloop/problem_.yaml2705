@@ -5,7 +5,7 @@ problem:
     Hstride: 1
     M: 64
     N: 1
-    P: 64
+    P: 72
     Q: 56
     R: 3
     S: 3
@@ -13,7 +13,7 @@ problem:
     Wstride: 1
     densities:
       Inputs:
-        density: 0.883952985
+        density: 0.8848298990000001
         distribution: fixed-structured
   shape:
     coefficients:

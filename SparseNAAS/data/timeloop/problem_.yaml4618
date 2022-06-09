@@ -1,9 +1,9 @@
 problem:
   instance:
-    C: 124
+    C: 96
     Hdilation: 1
     Hstride: 1
-    M: 288
+    M: 256
     N: 1
     P: 56
     Q: 56

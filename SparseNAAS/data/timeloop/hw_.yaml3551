@@ -1,5 +1,5 @@
 architecture:
-  bank: 2
+  bank: 16
   group_density: 8
   subtree:
   - local:
@@ -19,10 +19,10 @@ architecture:
       - attributes:
           block-size: 1
           depth: 883993600
-          read_bandwidth: 64
+          read_bandwidth: 272
           width: 8
           word-bits: 8
-          write_bandwidth: 16
+          write_bandwidth: 256
         class: regfile
         name: L2
       name: SIMD

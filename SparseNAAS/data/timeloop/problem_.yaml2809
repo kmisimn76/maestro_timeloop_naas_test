@@ -1,6 +1,6 @@
 problem:
   instance:
-    C: 3
+    C: 8
     Hdilation: 1
     Hstride: 1
     M: 64
@@ -8,7 +8,7 @@ problem:
     P: 224
     Q: 224
     R: 7
-    S: 7
+    S: 8
     Wdilation: 1
     Wstride: 1
     densities:

@@ -27,8 +27,8 @@ class _HWGene(object):
     def generate_random_gene(self):
         L2Buf = random.randint(1, 1000)
         L1Buf = random.randint(1, 1000)
-        PEs = random.randint(1, 8) #300
-        #PEs = random.randint(8, 8) #300
+        #PEs = random.randint(1, 8) #300
+        PEs = random.randint(8, 8) #300
         BW = random.randint(1,1000)
         NumDim = random.randint(2,2) #FIXME : Hardcoding, Fix NumDim to 2
         #DimSize0 = random.randint(1,16*16)
@@ -37,12 +37,28 @@ class _HWGene(object):
         DimSize0 = random.random() #0~1 -> to softmax
         DimSize1 = random.random() #0~1
         DimSize2 = random.random() #0~1
+        '''
         ParDimK = random.randint(1,6)
         ParDimC = random.randint(1,6)
         ParDimY = random.randint(1,6)
         ParDimX = random.randint(1,6)
         ParDimR = random.randint(1,6)
         ParDimS = random.randint(1,6)
+        '''
+        ParDimK = 6#random.randint(1,6) #weight stationary
+        ParDimC = 5#random.randint(1,6)
+        ParDimY = 4#random.randint(1,6)
+        ParDimX = 3#random.randint(1,6)
+        ParDimR = 2#random.randint(1,6)
+        ParDimS = 1#random.randint(1,6)
+        '''
+        ParDimK = 6#random.randint(1,6) #weight stationary
+        ParDimC = 4#random.randint(1,6)
+        ParDimY = 5#random.randint(1,6)
+        ParDimX = 3#random.randint(1,6)
+        ParDimR = 2#random.randint(1,6)
+        ParDimS = 1#random.randint(1,6)
+        '''
         Density = random.randint(1,3) # power of 2
         #Bank    = random.randint(1,16)
         Bank    = random.randint(1,4) # power of 2
@@ -57,7 +73,7 @@ class _HWGene(object):
             max_fitness_idx = np.where(fitness == np.max(fitness))
             max_fitness_idx = max_fitness_idx[0][0]
             parents[parent_num] = pop[max_fitness_idx]
-            fitness[max_fitness_idx] = float("-Inf")
+            fitness[max_fitness_idx] = float("-inf")
         return parents
 
     #HWGene

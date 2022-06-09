@@ -1,6 +1,6 @@
 architecture:
-  bank: 8
-  group_density: 2
+  bank: 2
+  group_density: 8
   subtree:
   - local:
     - attributes:
@@ -22,7 +22,7 @@ architecture:
           read_bandwidth: 48
           width: 8
           word-bits: 8
-          write_bandwidth: 256
+          write_bandwidth: 64
         class: regfile
         name: L2
       name: SIMD
@@ -61,5 +61,5 @@ architecture:
                 datawidth: 8
               class: intmac
               name: MACC
-            name: PE[0..1]
+            name: PE[0..7]
   version: 0.3

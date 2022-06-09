@@ -5,9 +5,9 @@ problem:
     Hstride: 1
     M: 256
     N: 1
-    P: 16
+    P: 15
     Q: 14
-    R: 3
+    R: 4
     S: 3
     Wdilation: 1
     Wstride: 1

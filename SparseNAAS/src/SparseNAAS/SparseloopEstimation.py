@@ -333,7 +333,14 @@ class SparseloopEstimator():
             if runtime <= 0 or energy <= 0: #Invalid
                 raise Exception('invalid map: runtime')
             if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
-                #if gen<10: # ignore resource check before fore generation
+                '''
+                if gen>=10: # ignore resource check before fore generation
+                    #print("Gene has out of FPGA resource, then raise error")
+                    raise Exception('invalid map: constraint')
+                else:
+                    #print("Initial adv. although Gene has out of FPGA resource")
+                    pass
+                '''
                 raise Exception('invalid map: constraint')
             return observation, judge(observation), estimated
         except Exception as e:

@@ -5,7 +5,7 @@ problem:
     Hstride: 1
     M: 128
     N: 1
-    P: 32
+    P: 48
     Q: 28
     R: 3
     S: 3

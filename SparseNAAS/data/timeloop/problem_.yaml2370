@@ -6,9 +6,9 @@ problem:
     M: 256
     N: 1
     P: 14
-    Q: 16
+    Q: 14
     R: 3
-    S: 4
+    S: 3
     Wdilation: 1
     Wstride: 1
     densities:

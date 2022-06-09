@@ -6,7 +6,7 @@ problem:
     M: 64
     N: 1
     P: 56
-    Q: 64
+    Q: 56
     R: 3
     S: 3
     Wdilation: 1

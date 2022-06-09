@@ -5,10 +5,10 @@ problem:
     Hstride: 1
     M: 128
     N: 1
-    P: 32
-    Q: 28
+    P: 36
+    Q: 42
     R: 3
-    S: 4
+    S: 3
     Wdilation: 1
     Wstride: 1
     densities:

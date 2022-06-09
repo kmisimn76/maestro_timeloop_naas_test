@@ -6,9 +6,9 @@ problem:
     M: 64
     N: 1
     P: 224
-    Q: 224
+    Q: 252
     R: 7
-    S: 9
+    S: 7
     Wdilation: 1
     Wstride: 1
     densities:
