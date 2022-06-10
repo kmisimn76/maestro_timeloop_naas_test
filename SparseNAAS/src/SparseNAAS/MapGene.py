@@ -35,12 +35,6 @@ class _MapGene(object):
     def get_sample_gene(self):
         return [6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
     def generate_random_gene(self):
-        #ArrTileSizeK = random.randint(1,min(16, self.model_defs[i][0]))
-        #ArrTileSizeC = random.randint(1,min(16, self.model_defs[i][1]))
-        #ArrTileSizeY = random.randint(1,min(16, self.model_defs[i][2]))
-        #ArrTileSizeX = random.randint(1,min(16, self.model_defs[i][3]))
-        #ArrTileSizeR = random.randint(1,min(16, self.model_defs[i][4]))
-        #ArrTileSizeS = random.randint(1,min(16, self.model_defs[i][5]))
         ArrTileSizeK = random.random() #0~1
         ArrTileSizeC = random.random()
         ArrTileSizeY = random.random()
@@ -87,9 +81,7 @@ class _MapGene(object):
         offspring = np.empty((offspring_size, len(MAPPING_GENE)))
         for k in range(offspring_size):
             parent1_idx = k%parents.shape[0]
-            parent2_idx = np.random.randint(0, parents.shape[0]) #(k+1)%parents.shape[0]
-            #offspring[k][0:crossover_point] = parents[parent1_idx][0:crossover_point]
-            #offspring[k][crossover_point:] = parents[parent2_idx][crossover_point:]
+            parent2_idx = np.random.randint(0, parents.shape[0])
             for i in range(len(MAPPING_GENE)):
                 offspring[k][i] = parents[parent1_idx][i] if random.randint(0,1)==0 else parents[parent2_idx][i] #crossover 1:1
         return offspring
@@ -133,22 +125,9 @@ class TIMELOOP_MAPPING:
         self.mapping_inner_tile_size[self.mapping_selected_hw_dim[1]] = 1
         self.mapping_inner_tile_size[4] = 1 #R,S PE tile is 1. except
         self.mapping_inner_tile_size[5] = 1 #R,S PE tile is 1. except
-        #if self.mapping_selected_hw_dim[0]==DIM.X or self.mapping_selected_hw_dim[1]==DIM.X: # when in/output stationary
-        #    self.mapping_inner_tile_size[DIM.Y] = 1 # to tile
-        #if self.mapping_selected_hw_dim[0]==DIM.Y or self.mapping_selected_hw_dim[1]==DIM.Y: # when in/output stationary
-        #    self.mapping_inner_tile_size[DIM.X] = 1 # to tile
-
         self.l2_tile_size = [int(math.ceil(self.l_info_hw[i]/self.mapping_tile_size[i])) for i in range(0,6)]
-        #self.l2_tile_size[self.mapping_selected_hw_dim[0]] = int(self.l_info_hw[self.mapping_selected_hw_dim[0]]/self.mapping_tile_size[self.mapping_selected_hw_dim[0]])+1
-        #self.l2_tile_size[self.mapping_selected_hw_dim[1]] = int(self.l_info_hw[self.mapping_selected_hw_dim[1]]/self.mapping_tile_size[self.mapping_selected_hw_dim[1]])+1
-
         self.l1_tile_size = [int(math.ceil(self.mapping_tile_size[i]/self.mapping_inner_tile_size[i])) for i in range(0,6)]
-        #self.l1_tile_size[self.mapping_selected_hw_dim[0]] = self.mapping_tile_size[self.mapping_selected_hw_dim[0]]
-        #self.l1_tile_size[self.mapping_selected_hw_dim[1]] = self.mapping_tile_size[self.mapping_selected_hw_dim[1]]
-
         self.pe_tile_size = [int(math.ceil(self.mapping_inner_tile_size[i])) for i in range(0,6)]
-        #self.pe_tile_size[self.mapping_selected_hw_dim[0]] = 1
-        #self.pe_tile_size[self.mapping_selected_hw_dim[1]] = 1
     def get_mapping_L2_tile_size(self):
         output = [v for v in self.l2_tile_size]
         return output

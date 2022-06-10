@@ -12,23 +12,13 @@ import copy
 from tqdm import tqdm
 from bayes_opt import BayesianOptimization
 from scipy import optimize
-#import threading
-#import queue
 from multiprocessing import Process, Queue
-'''
-def softmax(a) :
-    exp_a = np.exp(a)
-    sum_exp_a = np.sum(exp_a)
-    y = exp_a / sum_exp_a
-    return y
-'''
-use_maestro = False
 
+use_maestro = False
+use_sparseloop = True
 action_space, action_bound, action_bottom = get_action_space()
 action_space = [act * bound for act, bound in zip(action_space, action_bound)]
 start_range, end_range = 0, len(action_space[0])
-
-#from TimeloopMapping import *
 
 from HWGene import _HWGene, HW_GENE
 HWGene = _HWGene()
@@ -53,8 +43,7 @@ class MaestroEnvironment(object):
         self.random_file_name = "{}".format(random_file_name)
 
         self.fpga_constraint = Constraint_AlveoU200_Sparse()
-        #self.timeloop_estimator = TimeloopEstimator(self.random_file_name)
-        self.timeloop_estimator = SparseloopEstimator(self.random_file_name) #Sparse-aware
+        self.timeloop_estimator = SparseloopEstimator(self.random_file_name) if use_sparseloop else TimeloopEstimator(self.random_file_name)
 
         self.is_gemm = False
 
@@ -137,11 +126,6 @@ class MaestroEnvironment(object):
         self.total_eps_rewards = 0
         return self.state
 
-    def get_ref_constraint(self, bound=action_bound):
-        raise 'Depl'
-        #sol = [bound[:self.n_action_steps] for i in range(len(self.model_defs))]
-        #_, total_constraint = self.exterior_search(sol)
-        return total_constraint
     def set_constraint_value(self, max_constraint, min_constraint, constraint_value):
         self.constraint_value = constraint_value
         self.constraint_info = {"value": constraint_value,
@@ -159,7 +143,6 @@ class MaestroEnvironment(object):
         return not any(np.array(self.left_resource) < 0)
 
     def judge(self, observation):
-        #runtime, throughput, energy, area, l1_size, l2_size, mac, power = self.observation
         runtime, throughput, energy, area, l1_size, l2_size, mac, power = observation
         values = []
         for term in [self.fitness, self.constraint]:
@@ -209,18 +192,15 @@ class MaestroEnvironment(object):
         thread_number = 16
         count = 0
         pbar = tqdm(total=num_pop, desc="Initalize New HW Populations")
-        #for iter_n in tqdm(range(num_pop), desc="Initalize New HW Populations"):
         while count<num_pop:
             # PE Pop
             reward = None
             constraint = None
-            #que = queue.Queue()
             que = Queue()
             threads = []
             rand_gene = []
             for n_ in range(thread_number):
                 rand_gene.append(HWGene.generate_random_gene())
-                #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
                 t = Process(target=self.exterior_search, args=(0, self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
                 t.start()
                 threads.append(t)
@@ -240,14 +220,11 @@ class MaestroEnvironment(object):
         while count<num_layers*num_pop:
             # Map Pop for each layers
             reward = None
-            #que = queue.Queue()
             que = Queue()
             threads = []
             rand_gene = []
             for n_ in range(thread_number):
                 rand_gene.append(MapGene.generate_random_gene())
-                #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[0], sample_hw_gene, rand_gene[n_], n_, que))
-                #t = Process(target=self.exterior_search, args=(self.model_defs[0], sample_hw_gene, rand_gene[n_], n_, que))
                 ly_n = random.randint(0, num_layers-1)
                 h_g_n = random.randint(0, num_pop-1)
                 t = Process(target=self.exterior_search, args=(0, self.model_defs[ly_n], hw_new_population[h_g_n], rand_gene[n_], n_, que))
@@ -262,21 +239,6 @@ class MaestroEnvironment(object):
                     count += 1
                     pbar.update(1)
         pbar.close()
-
-        '''
-        for count in tqdm(range(num_pop), desc="Initalize New Map Populations"):
-            # Map Pop for each layers
-            for i in range(num_layers):
-                reward = None
-                while reward==None: #select valid gene
-                    rand_gene = MapGene.generate_random_gene()
-                    map_new_population[i][count] = np.array(rand_gene, dtype=float).copy()
-                    if use_maestro is True:
-                        reward, constraint = self.oberserve_maestro(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
-                    else:
-                        reward, constraint = self.exterior_search(self.model_defs[0], sample_hw_gene, map_new_population[i][count])
-            count += 1
-        '''
         return hw_new_population, map_new_population
 
     def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
@@ -284,8 +246,6 @@ class MaestroEnvironment(object):
         hw_fitness = np.empty(num_pop, float)
         map_fitness = np.empty((num_layers, num_pop), float)
         invalid_count = 0
-        #run
-        #que = queue.Queue()
         pbar = tqdm(total=num_layers*num_pop, desc="GA: Get fitness")
         max_num_thread = 256
         n_ = 0
@@ -299,7 +259,6 @@ class MaestroEnvironment(object):
                 j = n_%num_layers
                 hw_gene = hw_new_population[i]
                 map_gene = map_new_population[j][i]
-                #t = threading.Thread(target=self.exterior_search, args=(self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
                 t = Process(target=self.exterior_search, args=(gen, self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
                 t.start()
                 threads.append(t)
@@ -313,7 +272,6 @@ class MaestroEnvironment(object):
                 result_n_, reward_, constraint_ = que.get()
                 if reward_  == None or constraint_ > self.constraint_value:
                     reward_ = float("-inf")
-                    #constraint_ = float("-inf")
                 i = result_n_//num_layers
                 j = result_n_%num_layers
                 reward[i][j] = reward_
@@ -321,24 +279,11 @@ class MaestroEnvironment(object):
             if n_ >= num_layers*num_pop: break
         pbar.close()
         #get fitness
-        '''
-        for i_ in range(num_pop):
-            for j_ in range(num_layers):
-                n_, reward_, constraint_ = que.get()
-                if reward_  == None or constraint_ > self.constraint_value:
-                    reward_ = float("-inf")
-                    #constraint_ = float("-inf")
-                i = n_//num_layers
-                j = n_%num_layers
-                reward[i][j] = reward_
-                constraint[i][j] = constraint_
-        '''
         for i in range(num_pop):
             tot_reward = 0
             tot_constraint = 0
             for j in range(num_layers):
                 map_fitness[j][i] = reward[i][j]
-                #print(map_fitness[j][i])
                 if reward[i][j] is float("-inf") or -(10**20)>reward[i][j] or tot_reward is float("-inf"):
                     tot_reward = float("-inf")
                 else:
@@ -352,35 +297,6 @@ class MaestroEnvironment(object):
                 invalid_count += 1
             hw_fitness[i] = tot_reward
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
-
-        '''
-        for i in tqdm(range(num_pop), desc="initial fitness"):
-            hw_gene = hw_new_population[i]
-
-            tot_reward = 0
-            tot_constraint = 0
-            for j in range(num_layers):
-                reward, constraint = self.exterior_search(self.model_defs[j], hw_gene, map_new_population[j][i])
-                if reward == None or constraint > self.constraint_value:
-                    reward = float("-inf")
-                    #constraint = float("-inf")
-                map_fitness[j][i] = reward
-                tot_reward += reward
-                tot_constraint = constraint
-            reward = tot_reward
-            total_used_constraint = tot_constraint
-            if reward is None or reward is float("-inf"): # Can't compilation
-                reward = float("-inf")
-                #print("Error with reward")
-                #print(new_population[i])
-                #exit(-1)
-                invalid_count += 1
-            elif tot_constraint is None or total_used_constraint > self.constraint_value:
-                reward = float("-inf")
-                invalid_count += 1
-            hw_fitness[i] = reward
-        print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
-        '''
         return hw_fitness, map_fitness
 
     def genetic_search(self, epochs=100, chkpt_file="genetic_chkpt.plt",fd=None):
@@ -429,9 +345,6 @@ class MaestroEnvironment(object):
         
 
         # Get HW&mapping fitness for new pop
-        #hw_fitness = self.get_HW_fitness(num_pop, num_layers, hw_new_population, map_new_population)
-        #logger.debug("\n\n\n")
-        #map_fitness = self.get_Mapping_fitness(num_pop, num_layers, hw_new_population, map_new_population)
         hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
         logger.debug("\n\n\n\n")
 
@@ -474,76 +387,10 @@ class MaestroEnvironment(object):
                 self.best_rewards_iteration.append(iteration)
                 self.best_rewards_constraint.append(self.best_reward_constraint)
                 self.best_rewards.append(self.best_reward)
-
-            '''
-            num_invalid_node = 0
-            for pop in tqdm(range(num_pop), desc='GA population'):
-                tot_hw_reward = 0.0
-                total_used_constraint = 0.0
-
-                hw_gene = hw_new_population[pop] #Select HW Gene
-                
-                if False:
-                    for lr_i in range(num_layers):
-                        map_gene = map_new_population[lr_i][pop]
-                        reward, used_constraint = self.exterior_search(self.model_defs[lr_i], hw_gene, map_gene)
-                        if reward is None or used_constraint is None: # invalid mapping
-                            reward = float("-inf")
-                            used_constraint = float("-inf")
-                        elif used_constraint > self.constraint_value: # not met constraints
-                            reward = float("-inf")
-                            used_constraint = float("-inf")
-                        map_fitness[lr_i][pop] = reward
-                        tot_hw_reward += reward
-                        total_used_constraint += used_constraint
-                else:
-                    que = queue.Queue()
-                    threads = []
-                    for lr_i in range(num_layers):
-                        map_gene = map_new_population[lr_i][pop]
-                        t = threading.Thread(target=self.exterior_search, args=(self.model_defs[lr_i], hw_gene, map_gene, lr_i, que))
-                        t.start()
-                        threads.append(t)
-                    for t in threads:
-                        t.join()
-                    #for lr_i in range(num_layers):
-                    for i_ in range(num_layers):
-                        lr_i, reward, used_constraint = que.get()
-                        #print(lr_i, reward, used_constraint)
-                        if reward is None or used_constraint is None: # invalid mapping
-                            reward = float("-inf")
-                            used_constraint = float("-inf")
-                        elif used_constraint > self.constraint_value: # not met constraints
-                            reward = float("-inf")
-                            used_constraint = float("-inf")
-                        map_fitness[lr_i][pop] = reward
-                        tot_hw_reward += reward
-                        total_used_constraint += used_constraint
-
-                reward = tot_hw_reward
-                if reward is None or reward is float("-inf"): # invalid mapping
-                    reward = float("-inf")
-                    num_invalid_node += 1
-                elif total_used_constraint//num_layers > self.constraint_value: # not met constraints
-                    reward = float("-inf")
-                    num_invalid_node += 1
-                if reward > self.best_reward:
-                    best_gen_reward = reward
-                    self.best_reward = reward
-                    self.best_reward_constraint = total_used_constraint/num_layers
-                    self.best_sol = (hw_new_population[pop].copy(), [map_new_population[lr_i][pop].copy() for lr_i in range(num_layers)])
-
-                hw_fitness[pop] = reward
-                iteration += 1
-                self.best_rewards_iteration.append(iteration)
-                self.best_rewards_constraint.append(self.best_reward_constraint)
-                self.best_rewards.append(self.best_reward)
-            '''
             best_tmp_results = self.timeloop_estimator.get_gene_HW_info(self.model_defs[0], self.best_sol[0], self.best_sol[1][0])
             print("Best sol(Xdim, X, Ydim, Y, group_density, bank): ", best_tmp_results)
             if best_gen_reward  is not None:
                 logger.debug("\nHW Generation {}: new best award reward: {:9e}".format(generation+1, self.best_reward))
-            #self.count_invalid += num_invalid_node
             self.save_chkpt()
         # == end of HW GA
 
@@ -563,22 +410,11 @@ class MaestroEnvironment(object):
             total_reward += reward
             dir_name = '../../data/best/{:02d}'.format(lr_i)
             os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
-            #shutil.copy('../../data/timeloop/hw_.yaml', dir_name+'/hw_.yaml')
-            #shutil.copy('../../data/timeloop/mapping_.yaml', dir_name+'/mapping_.yaml')
-            #shutil.copy('../../data/timeloop/problem_.yaml', dir_name+'/problem_.yaml')
-            #shutil.copy('../../data/timeloop/sparse_.yaml', dir_name+'/sparse_.yaml')
             self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
                                                           dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
         print('best reward: ', total_reward)
 
 
-    def load_chkpt(self, chkpt):
-        raise "Depleted"
-        self.reward_rec = chkpt["reward_rec"]
-        self.best_reward = chkpt["best_reward"]
-        self.best_rewards= chkpt["best_rewards"]
-        self.best_sol= chkpt["best_sol"]
-        self.worst_reward = chkpt["worst_reward"]
     def get_chkpt(self):
         return  {
             "reward_rec":self.reward_rec,

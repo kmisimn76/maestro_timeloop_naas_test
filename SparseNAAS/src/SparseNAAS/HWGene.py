@@ -27,40 +27,19 @@ class _HWGene(object):
     def generate_random_gene(self):
         L2Buf = random.randint(1, 1000)
         L1Buf = random.randint(1, 1000)
-        #PEs = random.randint(1, 8) #300
-        PEs = random.randint(8, 8) #300
+        PEs = random.randint(1, 8) #300
         BW = random.randint(1,1000)
         NumDim = random.randint(2,2) #FIXME : Hardcoding, Fix NumDim to 2
-        #DimSize0 = random.randint(1,16*16)
-        #DimSize1 = random.randint(1,16*16)
-        #DimSize2 = random.randint(1,16*16)
         DimSize0 = random.random() #0~1 -> to softmax
         DimSize1 = random.random() #0~1
         DimSize2 = random.random() #0~1
-        '''
         ParDimK = random.randint(1,6)
         ParDimC = random.randint(1,6)
         ParDimY = random.randint(1,6)
         ParDimX = random.randint(1,6)
         ParDimR = random.randint(1,6)
         ParDimS = random.randint(1,6)
-        '''
-        ParDimK = 6#random.randint(1,6) #weight stationary
-        ParDimC = 5#random.randint(1,6)
-        ParDimY = 4#random.randint(1,6)
-        ParDimX = 3#random.randint(1,6)
-        ParDimR = 2#random.randint(1,6)
-        ParDimS = 1#random.randint(1,6)
-        '''
-        ParDimK = 6#random.randint(1,6) #weight stationary
-        ParDimC = 4#random.randint(1,6)
-        ParDimY = 5#random.randint(1,6)
-        ParDimX = 3#random.randint(1,6)
-        ParDimR = 2#random.randint(1,6)
-        ParDimS = 1#random.randint(1,6)
-        '''
         Density = random.randint(1,3) # power of 2
-        #Bank    = random.randint(1,16)
         Bank    = random.randint(1,4) # power of 2
         return [L2Buf, L1Buf, PEs, BW, NumDim,
                     DimSize0, DimSize1, DimSize2,
@@ -79,12 +58,9 @@ class _HWGene(object):
     #HWGene
     def crossover(self, parents, offspring_size):
         offspring = np.empty((offspring_size, len(HW_GENE)))
-        #crossover_point = np.uint8(14/2)
         for k in range(offspring_size):
             parent1_idx = k%parents.shape[0]
-            parent2_idx = np.random.randint(0, parents.shape[0]) #(k+1)%parents.shape[0]
-            #offspring[k][0:crossover_point] = parents[parent1_idx][0:crossover_point]
-            #offspring[k][crossover_point:] = parents[parent2_idx][crossover_point:]
+            parent2_idx = np.random.randint(0, parents.shape[0])
             for i in range(len(HW_GENE)):
                 offspring[k][i] = parents[parent1_idx][i] if random.randint(0,1)==0 else parents[parent2_idx][i] #crossover 1:1
         return offspring
@@ -143,11 +119,9 @@ class TIMELOOP_HW:
         self.L1_size = 0
         self.Density = 0
         self.Bank = 0
-    #def set_HW(self,x,y,xdim, ydim, l2_size,l1_size, density, bank):
     def set_HW(self,hw_gene):
         selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
-        #dim_size = [2**(round(hw_gene[HW_GENE.NUM_PE]**x)) for x in self.softmax([hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]])] #get dim size from encoding vector
-        sum_dim = hw_gene[HW_GENE.DIM_SIZE_0] + hw_gene[HW_GENE.DIM_SIZE_1] #+ hw_gene[HW_GENE.DIM_SIZE_2]
+        sum_dim = hw_gene[HW_GENE.DIM_SIZE_0] + hw_gene[HW_GENE.DIM_SIZE_1]
         dim_size = [2**(round(hw_gene[HW_GENE.NUM_PE]*(x/sum_dim))) for x in [hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]]] #get dim size from encoding vector
         x = dim_size[0]
         y = dim_size[1]
@@ -156,7 +130,6 @@ class TIMELOOP_HW:
         l2_size = hw_gene[HW_GENE.L2_SIZE]
         l1_size = hw_gene[HW_GENE.L1_SIZE]
         density = 2**(int(hw_gene[HW_GENE.GROUP_DENSITY] ))
-        #bank = int(hw_gene[HW_GENE.BANK])
         bank = 2**int(hw_gene[HW_GENE.BANK])
         self.dim_size = dim_size
         self.X = x
