@@ -1,19 +1,19 @@
 problem:
   instance:
-    C: 256
+    C: 512
     Hdilation: 1
     Hstride: 1
     M: 1024
     N: 1
-    P: 14
-    Q: 20
+    P: 28
+    Q: 32
     R: 1
     S: 1
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.9578890059999999
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

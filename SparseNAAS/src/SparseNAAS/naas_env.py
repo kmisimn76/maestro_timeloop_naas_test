@@ -14,8 +14,11 @@ from bayes_opt import BayesianOptimization
 from scipy import optimize
 from multiprocessing import Process, Queue
 
+
 use_maestro = False
-use_sparseloop = True
+use_sparseloop = False #True
+
+
 action_space, action_bound, action_bottom = get_action_space()
 action_space = [act * bound for act, bound in zip(action_space, action_bound)]
 start_range, end_range = 0, len(action_space[0])
@@ -27,14 +30,22 @@ MapGene = _MapGene()
 
 from TimeloopEstimation import TimeloopEstimator
 from SparseloopEstimation import SparseloopEstimator
+from SparseAccelEstimation import SparseAccelEstimator
 from FPGAConstraint.AlveoU200 import Constraint_AlveoU200_Sparse
 
-class MaestroEnvironment(object):
+class NAAS(object):
 
 
-    def __init__(self, model_defs, finish_reward=100, dim_size=6,n_action_steps=2, resource_size=2, dataflow="dla", is_discrete=True):
-        super(MaestroEnvironment,self).__init__()
+    def __init__(self, model_defs, outdir, epoch_info, finish_reward=100, dim_size=6,n_action_steps=2, resource_size=2, dataflow="dla", is_discrete=True):
+        super(NAAS,self).__init__()
         dst_path = "../../cost_model/maestro"
+
+        self.outdir = outdir
+
+        self.epochs = epoch_info['epochs'] #7000#3600 #hardcoded
+        self.num_pop = epoch_info['num_pop'] #100#60 #hardcoded
+        self.num_gen = epoch_info['num_gen'] #epochs // num_pop
+        self.num_parents = epoch_info['num_parents'] #40#30 #hardcoded
 
         maestro = dst_path
         self._executable = "{}".format(maestro)
@@ -43,7 +54,9 @@ class MaestroEnvironment(object):
         self.random_file_name = "{}".format(random_file_name)
 
         self.fpga_constraint = Constraint_AlveoU200_Sparse()
-        self.timeloop_estimator = SparseloopEstimator(self.random_file_name) if use_sparseloop else TimeloopEstimator(self.random_file_name)
+        #self.timeloop_estimator = SparseloopEstimator(self.random_file_name) if use_sparseloop else TimeloopEstimator(self.random_file_name)
+        self.timeloop_estimator = SparseAccelEstimator(self.random_file_name) #FIXME:
+        print("Use SparseAccelEstimator, under test")
 
         self.is_gemm = False
 
@@ -189,7 +202,7 @@ class MaestroEnvironment(object):
         sample_hw_gene = np.array(HWGene.get_sample_gene(), dtype=float).copy()
         sample_map_gene = np.array(MapGene.get_sample_gene(), dtype=float).copy()
 
-        thread_number = 16
+        thread_number = 256
         count = 0
         pbar = tqdm(total=num_pop, desc="Initalize New HW Populations")
         while count<num_pop:
@@ -208,7 +221,8 @@ class MaestroEnvironment(object):
                 t.join()
             for n_ in range(thread_number):
                 i_, reward, constraint = que.get()
-                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and count<num_pop: #select valid gene
+                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and count<num_pop: #select valid gene. Incorrect, but more score
+                #if not(reward==None or (constraint==None or constraint > self.constraint_value)) and count<num_pop: #select valid gene. Correct, but less score
                     hw_new_population[count] = np.array(rand_gene[i_], dtype=float).copy()
                     count += 1
                     pbar.update(1)
@@ -217,6 +231,7 @@ class MaestroEnvironment(object):
         thread_number = 256#16*8
         count = 0
         pbar = tqdm(total=num_layers*num_pop, desc="Initalize New Map Populations")
+        '''
         while count<num_layers*num_pop:
             # Map Pop for each layers
             reward = None
@@ -239,6 +254,32 @@ class MaestroEnvironment(object):
                     count += 1
                     pbar.update(1)
         pbar.close()
+        '''
+        while count<num_layers*num_pop:
+            # Map Pop for each layers
+            reward = None
+            que = Queue()
+            threads = []
+            rand_gene = []
+            for n_ in range(thread_number):
+                rand_gene.append(MapGene.generate_random_gene())
+                n_cnt = count+n_//32 if (count+i_//32)<num_layers*num_pop else count
+                ly_n = (n_cnt)//num_pop
+                h_g_n = (n_cnt)%num_pop
+                t = Process(target=self.exterior_search, args=(0, self.model_defs[ly_n], hw_new_population[h_g_n], rand_gene[n_], n_, que))
+                t.start()
+                threads.append(t)
+            for t in threads:
+                t.join()
+            for n_ in range(thread_number):
+                i_, reward, constraint = que.get()
+                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and (count+i_//32)<num_layers*num_pop: #select valid gene
+                    map_new_population[(count+i_//32)//num_pop][(count+i_//32)%num_pop] = np.array(rand_gene[i_], dtype=float).copy()
+                    #count += 1
+                    #pbar.update(1)
+            count += 256//32
+            pbar.update(256//32)
+        pbar.close()
         return hw_new_population, map_new_population
 
     def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
@@ -255,8 +296,8 @@ class MaestroEnvironment(object):
             que = Queue()
             threads = []
             for th_ in range(max_num_thread):
-                i = n_//num_layers
-                j = n_%num_layers
+                i = n_//num_layers #pop
+                j = n_%num_layers #layer
                 hw_gene = hw_new_population[i]
                 map_gene = map_new_population[j][i]
                 t = Process(target=self.exterior_search, args=(gen, self.model_defs[j], hw_gene, map_gene, (i*(num_layers)+j), que))
@@ -283,7 +324,7 @@ class MaestroEnvironment(object):
             tot_reward = 0
             tot_constraint = 0
             for j in range(num_layers):
-                map_fitness[j][i] = reward[i][j]
+                map_fitness[j][i] = reward[i][j] #FIXME
                 if reward[i][j] is float("-inf") or -(10**20)>reward[i][j] or tot_reward is float("-inf"):
                     tot_reward = float("-inf")
                 else:
@@ -296,6 +337,8 @@ class MaestroEnvironment(object):
                 tot_reward = float("-inf")
                 invalid_count += 1
             hw_fitness[i] = tot_reward
+            #for j in range(num_layers): #FIXME
+                #map_fitness[j][i] = hw_fitness[i] #FIXME
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
         return hw_fitness, map_fitness
 
@@ -311,10 +354,11 @@ class MaestroEnvironment(object):
         logger.addHandler(output_file_handler)
         logger.addHandler(stdout_handler)
 
-        epochs = 7000#3600 #hardcoded
-        num_pop = 100#60 #hardcoded
-        num_gen = epochs // num_pop
-        num_parents = 40#30 #hardcoded
+
+        epochs = self.epochs #7000#3600 #hardcoded
+        num_pop = self.num_pop #100#60 #hardcoded
+        num_gen = self.num_gen #epochs // num_pop
+        num_parents = self.num_parents #40#30 #hardcoded
         self.fd = fd
         self.chkpt_file = chkpt_file
         self.start_range = start_range
@@ -346,6 +390,7 @@ class MaestroEnvironment(object):
 
         # Get HW&mapping fitness for new pop
         hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
+        print("First fitness optimal : {:9e}".format(min(hw_fitness)))
         logger.debug("\n\n\n\n")
 
         # HW -> Mapping Opt.
@@ -353,14 +398,14 @@ class MaestroEnvironment(object):
 
         for generation in range(num_gen):
             print("Gen ", generation)
-            if generation == 10:
-                    self.best_reward = float("-inf")
+            #if generation == 10: #?
+            #        self.best_reward = float("-inf")
             best_gen_reward =None
             parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents)
 
             offspring_crossover = HWGene.crossover(parents,
                                             num_pop-num_parents)
-            offspring_mutation = HWGene.mutation(offspring_crossover, rate=0.1)
+            offspring_mutation = HWGene.mutation(offspring_crossover, rate=0.08)
 
             hw_new_population[0:parents.shape[0], :] = parents
             hw_new_population[parents.shape[0]:, :] = offspring_mutation
@@ -370,7 +415,7 @@ class MaestroEnvironment(object):
                                                         num_parents)
                 offspring_crossover = MapGene.crossover(parents,
                                                         num_pop-num_parents)
-                offspring_mutation = MapGene.mutation(offspring_crossover, rate=0.1)
+                offspring_mutation = MapGene.mutation(offspring_crossover, rate=0.08)
 
                 map_new_population[lr_i][0:parents.shape[0], :] = parents
                 map_new_population[lr_i][parents.shape[0]:, :] = offspring_mutation
@@ -401,18 +446,20 @@ class MaestroEnvironment(object):
         logger.debug(self.best_rewards_constraint)
 
         import shutil
-        os.mkdir('../../data/best') if os.path.exists("../../data/best") is False else None
+        outdir = self.outdir #'../../data/best'
+        os.mkdir(outdir) if os.path.exists(outdir) is False else None
         total_reward = 0
         print("best reward each layer")
         for lr_i in range(num_layers):
             reward, constraint = self.exterior_search(num_gen-1, self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
             print(reward)
             total_reward += reward
-            dir_name = '../../data/best/{:02d}'.format(lr_i)
+            dir_name = outdir+'/{:02d}'.format(lr_i)
             os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
             self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
                                                           dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
         print('best reward: ', total_reward)
+        print('raw mapping data stored @ {}'.format(dir_name+'/hw_.yaml'))
 
 
     def get_chkpt(self):

@@ -5,15 +5,15 @@ problem:
     Hstride: 1
     M: 128
     N: 1
-    P: 28
-    Q: 28
+    P: 48
+    Q: 30
     R: 3
     S: 3
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.911452382
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

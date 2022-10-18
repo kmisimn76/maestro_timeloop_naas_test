@@ -1,21 +1,21 @@
 mapping:
-- factors: M=1 C=2 P=2 Q=2 R=1 S=1 N=1
-  permutation: NCQPRSM
+- factors: M=8 C=1 P=1 Q=1 R=1 S=1 N=1
+  permutation: NCQPRMS
   target: DRAM
   type: temporal
-- factors: M=32 C=17 P=1 Q=1 R=1 S=1 N=1
-  permutation: NSPQRMC
+- factors: M=4 C=8 P=2 Q=1 R=1 S=1 N=1
+  permutation: NCQSMRP
   target: L2
   type: temporal
 - factors: M=1 C=1 P=1 Q=1 R=1 S=1 N=1
   permutation: SRQPCMN
   target: L1
   type: temporal
-- factors: M=32 C=8 P=1 Q=1 R=1 S=1 N=1
+- factors: M=32 C=32 P=1 Q=1 R=1 S=1 N=1
   permutation: SRPQCMN
   target: L1
   type: spatial
-- factors: M=1 C=1 P=7 Q=7 R=1 S=1 N=1
+- factors: M=1 C=1 P=7 Q=14 R=1 S=1 N=1
   permutation: SRQPCMN
   target: Buffer
   type: temporal

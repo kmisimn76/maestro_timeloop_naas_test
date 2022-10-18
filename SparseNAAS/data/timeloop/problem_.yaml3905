@@ -1,6 +1,6 @@
 problem:
   instance:
-    C: 364
+    C: 256
     Hdilation: 1
     Hstride: 1
     M: 1024
@@ -13,7 +13,7 @@ problem:
     Wstride: 1
     densities:
       Inputs:
-        density: 0.891068602
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

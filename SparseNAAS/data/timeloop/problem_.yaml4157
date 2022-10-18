@@ -6,14 +6,14 @@ problem:
     M: 512
     N: 1
     P: 28
-    Q: 36
+    Q: 28
     R: 1
     S: 1
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.916454378
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

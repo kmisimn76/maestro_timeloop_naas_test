@@ -20,30 +20,75 @@ class HW_GENE (IntEnum):
     PAR_DIM_S   = 13
     GROUP_DENSITY= 14
     BANK        = 15
+    L2_WEIGHT_SIZE     = 16
+    L2_INPUT_SIZE     = 17
+    L2_OUTPUT_SIZE     = 18
+    L1_WEIGHT_SIZE     = 19
+    L1_INPUT_SIZE     = 20
+    L1_OUTPUT_SIZE     = 21
+
+
+## Design Space Constraints
+MAX_PE = 12 #8
+MIN_PE = 10  #8
+SQUARE_SHAPE_PE = False
+WEIGHT_STATIONARY = False
+DISABLE_BANK = False
+DISABLE_GROUP = False
 
 class _HWGene(object):
     def get_sample_gene(self):
-        return [3000, 100, 8, 50, 2, 0.5, 0.5, 0.5, 6,5,4,3,2,1, 1, 4]
+        return [3000, 100, 8, 50, 2, 0.5, 0.5, 0.5, 6,5,4,3,2,1, 1, 4, 1000, 1000, 1000, 300, 300, 300]
     def generate_random_gene(self):
-        L2Buf = random.randint(1, 1000)
-        L1Buf = random.randint(1, 1000)
-        PEs = random.randint(1, 8) #300
+        L2Buf = 0
+        L1Buf = 0
+        L2Buf_weight = random.randint(100, 128000)
+        L2Buf_input = random.randint(100, 128000)
+        L2Buf_output = random.randint(100, 128000)
+        L1Buf_weight = random.randint(100, 128000)
+        L1Buf_input = random.randint(100, 128000)
+        L1Buf_output = random.randint(100, 128000)
+        PEs = random.randint(MIN_PE, MAX_PE) # power of 2 #300
         BW = random.randint(1,1000)
         NumDim = random.randint(2,2) #FIXME : Hardcoding, Fix NumDim to 2
-        DimSize0 = random.random() #0~1 -> to softmax
-        DimSize1 = random.random() #0~1
-        DimSize2 = random.random() #0~1
-        ParDimK = random.randint(1,6)
-        ParDimC = random.randint(1,6)
-        ParDimY = random.randint(1,6)
-        ParDimX = random.randint(1,6)
-        ParDimR = random.randint(1,6)
-        ParDimS = random.randint(1,6)
-        Density = random.randint(1,3) # power of 2
-        Bank    = random.randint(1,4) # power of 2
+
+        if SQUARE_SHAPE_PE:
+            DimSize0 = 0.5 #for dense FIXME 0~1 -> to softmax
+            DimSize1 = 0.5 #for dense FIXME 0~1
+            DimSize2 = 0.5 #for dense FIXME 0~1
+        else:
+            DimSize0 = random.random() #0~1 -> to softmax
+            DimSize1 = random.random() #0~1
+            DimSize2 = random.random() #0~1
+
+        if WEIGHT_STATIONARY:
+            ParDimK = 6#random.randint(1,6) #for dense
+            ParDimC = 5#random.randint(1,6) #for dense
+            ParDimY = 4#random.randint(1,6) #for dense
+            ParDimX = 3#random.randint(1,6) #for dense
+            ParDimR = 2#random.randint(1,6) #for dense
+            ParDimS = 1#random.randint(1,6) #for dense
+        else:
+            ParDimK = random.randint(1,6)
+            ParDimC = random.randint(1,6)
+            ParDimY = random.randint(1,6)
+            ParDimX = random.randint(1,6)
+            ParDimR = random.randint(1,6)
+            ParDimS = random.randint(1,6)
+
+        if DISABLE_BANK:
+            Bank    = 0 # for Dense FIXME
+        else:
+            Bank    = random.randint(0,4) # power of 2
+        if DISABLE_GROUP:
+            Density = 4 # for Dense FIXME
+        else:
+            Density = random.randint(0,6) # power of 2
+
         return [L2Buf, L1Buf, PEs, BW, NumDim,
                     DimSize0, DimSize1, DimSize2,
-                    ParDimK, ParDimC, ParDimY, ParDimX, ParDimR, ParDimS, Density, Bank]
+                    ParDimK, ParDimC, ParDimY, ParDimX, ParDimR, ParDimS, Density, Bank,
+                    L2Buf_weight, L2Buf_input, L2Buf_output, L1Buf_weight, L1Buf_input, L1Buf_output]
 
     #HWGene
     def select_parents(self, pop, fitness, num_parents):
@@ -119,6 +164,12 @@ class TIMELOOP_HW:
         self.L1_size = 0
         self.Density = 0
         self.Bank = 0
+        self.L2_weight_size = 0
+        self.L2_input_size = 0
+        self.L2_output_size = 0
+        self.L1_weight_size = 0
+        self.L1_input_size = 0
+        self.L1_output_size = 0
     def set_HW(self,hw_gene):
         selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
         sum_dim = hw_gene[HW_GENE.DIM_SIZE_0] + hw_gene[HW_GENE.DIM_SIZE_1]
@@ -140,6 +191,12 @@ class TIMELOOP_HW:
         self.L1_size = l1_size
         self.Density = density
         self.Bank = bank
+        self.L2_weight_size = hw_gene[HW_GENE.L2_WEIGHT_SIZE]
+        self.L2_input_size = hw_gene[HW_GENE.L2_INPUT_SIZE]
+        self.L2_output_size = hw_gene[HW_GENE.L2_OUTPUT_SIZE]
+        self.L1_weight_size = hw_gene[HW_GENE.L1_WEIGHT_SIZE]
+        self.L1_input_size = hw_gene[HW_GENE.L1_INPUT_SIZE]
+        self.L1_output_size = hw_gene[HW_GENE.L1_OUTPUT_SIZE]
     def get_X(self):
         return self.X
     def get_Y(self):
@@ -149,9 +206,9 @@ class TIMELOOP_HW:
     def get_YDim(self):
         return self.YDim
     def get_L2_size(self):
-        return self.L2_size
+        return self.L2_weight_size, self.L2_input_size, self.L2_output_size
     def get_L1_size(self):
-        return self.L1_size
+        return self.L1_weight_size, self.L1_input_size, self.L1_output_size
     def get_group_density(self):
         return self.Density
     def get_bank(self):

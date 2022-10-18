@@ -1,17 +1,17 @@
 mapping:
-- factors: M=1 C=9 P=1 Q=1 R=1 S=1 N=1
-  permutation: NCPSMQR
+- factors: M=1 C=2 P=1 Q=1 R=1 S=3 N=1
+  permutation: NPMRCSQ
   target: DRAM
   type: temporal
-- factors: M=4 C=30 P=1 Q=1 R=3 S=3 N=1
-  permutation: NRSMCQP
+- factors: M=16 C=8 P=1 Q=1 R=3 S=1 N=1
+  permutation: NPSQCMR
   target: L2
   type: temporal
 - factors: M=1 C=1 P=1 Q=1 R=1 S=1 N=1
   permutation: SRQPCMN
   target: L1
   type: temporal
-- factors: M=128 C=2 P=1 Q=1 R=1 S=1 N=1
+- factors: M=32 C=32 P=1 Q=1 R=1 S=1 N=1
   permutation: SRPQCMN
   target: L1
   type: spatial

@@ -17,6 +17,7 @@ sparse_optimizations:
         - format: UB
         - format: UB
         - format: UB
+        - format: UB
   - action-optimization:
     - condition-on:
       - Inputs

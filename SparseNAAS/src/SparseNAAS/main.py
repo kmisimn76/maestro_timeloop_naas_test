@@ -6,7 +6,7 @@ module_path = os.path.abspath(os.path.join(script_dir, '../../'))
 if module_path not in sys.path:
     sys.path.insert(0,module_path)
 from src.utils.get_action_space import *
-from naas_env import MaestroEnvironment
+from naas_env import NAAS 
 from datetime import datetime
 import pickle
 import matplotlib.pyplot as plt
@@ -19,7 +19,9 @@ if __name__ == "__main__":
     parser.add_argument('--fitness', type=str, default="latency", help='The objective.')
     parser.add_argument('--cstr', type=str, default="area", help='The constraint.')
     parser.add_argument('--mul', type=float, default=0.5, help='The resource ratio, the design is allowed to use.')
-    parser.add_argument('--epochs', type=int, default=500, help='Number of epochs.')
+    parser.add_argument('--epochs', type=int, default=7000, help='Number of epochs.')
+    parser.add_argument('--num_pop', type=int, default=100, help='Number of epochs.')
+    parser.add_argument('--num_parents', type=int, default=40, help='Number of epochs.')
     parser.add_argument('--gpu', type=int, default=0,  help='which gpu')
     parser.add_argument('--df', type=str, default="shi",  help='The dataflow strategy.')
     parser.add_argument('--alg', type=str, default="random", help='Please choose from [genetic(=NAAS)]'
@@ -60,8 +62,15 @@ if __name__ == "__main__":
     _, dim_size = model_defs.shape
     # fd = open(expLog_file, "w")
 
+    epoch_info = {}
+    epoch_info['epochs'] = opt.epochs #7000#3600 #hardcoded
+    epoch_info['num_pop'] = opt.num_pop #100#60 #hardcoded
+    epoch_info['num_gen'] = epoch_info['epochs'] // epoch_info['num_pop']
+    epoch_info['num_parents'] = opt.num_parents #40#30 #hardcoded
+
     action_space, action_bound, action_bottom = get_action_space()
-    env = MaestroEnvironment(model_defs=model_defs,dim_size=dim_size, dataflow=opt.df)
+    print("Target Model: ", m_file)
+    env = NAAS(model_defs=model_defs,outdir=outdir, epoch_info=epoch_info, dim_size=dim_size, dataflow=opt.df)
     env.set_fitness(opt.fitness)
     env.set_constraint(opt.cstr)
     '''

@@ -55,7 +55,7 @@ class SparseloopEstimator():
         return hw_info, mapping
 
 
-    def write_timeloop_hw(self, dimension, hw_info, filename_=None, layer_id=0):
+    def write_timeloop_hw(self, dimension, hw_info, mapping_info, filename_=None, layer_id=0):
         file_name = self.result_yaml_hw if filename_ is None else filename_
         example_file_name = self.example_yaml_hw
         with open(example_file_name, "r") as f:
@@ -98,6 +98,37 @@ class SparseloopEstimator():
 
         data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth
         data_L2['attributes']['write_bandwidth'] = output_bandwidth
+
+        '''
+        burst_size = 4096
+        transaction_delay = 75
+        burst_delay = 2
+        overhead = 2
+
+        length = (mapping_info.get_mapping_L1_tile_size()[3]*mapping_info.get_mapping_PE_tile_size()[3]) #L1_size_W , for weight stationary
+        packet_size = 1 * hw_map[DIM.C] #1byte precision, 
+        iteration = (mapping_info.get_mapping_L1_tile_size()[2]*mapping_info.get_mapping_PE_tile_size()[2]) * \
+                        (mapping_info.get_mapping_L1_tile_size()[1]*mapping_info.get_mapping_PE_tile_size()[1])/hw_map[DIM.C] #L1_size_H * L1_size_C/hw_C
+        dram_input_bw = (length*packet_size*iteration) / ((length+((length*packet_size/burst_size)*burst_delay)+transaction_delay)*iteration + overhead)
+
+        length = (mapping_info.get_mapping_L1_tile_size()[0]*mapping_info.get_mapping_PE_tile_size()[3]) * \
+                    (mapping_info.get_mapping_L1_tile_size()[1]*mapping_info.get_mapping_PE_tile_size()[1]) * \
+                    (mapping_info.get_mapping_L1_tile_size()[4]*mapping_info.get_mapping_PE_tile_size()[4]) * \
+                    (mapping_info.get_mapping_L1_tile_size()[5]*mapping_info.get_mapping_PE_tile_size()[5]) / hw_map[DIM.K]  #L1_size_R*S*C*K
+        packet_size = 1 * hw_map[DIM.K] #1byte precision, 
+        iteration = 1
+        dram_weight_bw = (length*packet_size*iteration) / ((length+((length*packet_size/burst_size)*burst_delay)+transaction_delay)*iteration + overhead)
+
+        length = (mapping_info.get_mapping_L1_tile_size()[3]*mapping_info.get_mapping_PE_tile_size()[3]) #L1_size_W , for weight stationary
+        packet_size = 4 * hw_map[DIM.K] #4byte precision, DIM K
+        iteration = (mapping_info.get_mapping_L1_tile_size()[2]*mapping_info.get_mapping_PE_tile_size()[2]) * \
+                        (mapping_info.get_mapping_L1_tile_size()[0]*mapping_info.get_mapping_PE_tile_size()[0])/hw_map[DIM.K] #L1_size_H * L1_size_K/hw_K
+        dram_output_bw = (length*packet_size*iteration) / ((length+((length*packet_size/burst_size)*burst_delay)+transaction_delay)*iteration + overhead)
+
+        data_DRAM['attributes']['read_bandwidth'] = dram_input_bw + dram_weight_bw
+        data_DRAM['attributes']['write_bandwidth'] = dram_output_bw
+        '''
+        raise "need to copy code from TimeloopEstimator.py"
 
         with open(file_name, "w") as f:
             yaml.dump(data, f)
@@ -257,7 +288,7 @@ class SparseloopEstimator():
                 # Invalid mapping
                 #print(e)
                 return None, (None, None), None
-            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, filename_=None if thread_id is None else self.result_yaml_hw+str(thread_id))
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_hw+str(thread_id))
             map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_map+str(thread_id))
             prob_file_name = self.write_timeloop_problem(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_prob+str(thread_id))
             sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=None if thread_id is None else self.result_yaml_sparseopt+str(thread_id))
@@ -332,7 +363,7 @@ class SparseloopEstimator():
             target_constraint.set_constraint(group_density=hw_info.get_group_density(), bank=hw_info.get_bank())
             if runtime <= 0 or energy <= 0: #Invalid
                 raise Exception('invalid map: runtime')
-            if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Invalid
+            if (target_constraint is not None) and (target_constraint.check_constraints(estimated, hw_info, mapping_info) is False): #Check constraint Invalid
                 '''
                 if gen>=10: # ignore resource check before fore generation
                     #print("Gene has out of FPGA resource, then raise error")
@@ -367,7 +398,7 @@ class SparseloopEstimator():
             except:
                 # Invalid mapping
                 return None, None, None, None
-            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, filename_=hw_file_name)
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, mapping_info, filename_=hw_file_name)
             map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=map_file_name)
             prob_file_name = self.write_timeloop_problem(dimension[i], hw_info, mapping_info, filename_=prob_file_name)
             sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=sparse_file_name)

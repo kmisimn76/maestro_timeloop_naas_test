@@ -1,9 +1,9 @@
 problem:
   instance:
-    C: 128
+    C: 224
     Hdilation: 1
     Hstride: 1
-    M: 128
+    M: 144
     N: 1
     P: 28
     Q: 28
@@ -13,7 +13,7 @@ problem:
     Wstride: 1
     densities:
       Inputs:
-        density: 0.903122843
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

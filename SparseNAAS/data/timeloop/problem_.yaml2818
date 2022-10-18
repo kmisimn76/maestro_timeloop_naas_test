@@ -7,13 +7,13 @@ problem:
     N: 1
     P: 56
     Q: 56
-    R: 3
+    R: 4
     S: 3
     Wdilation: 1
     Wstride: 1
     densities:
       Inputs:
-        density: 0.83585084
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

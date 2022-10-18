@@ -1,6 +1,6 @@
 
 ## Warning
-print("for KxQ output statoinary!")
+#print("WARNING: for KxQ output statoinary!")
 
 import yaml
 for i in range(0,53):
@@ -22,7 +22,7 @@ for i in range(0,53):
     tilesize = [t*int(d[2:]) for t,d in zip(tilesize,mapping_data_Buf['factors'].split(' '))]
     
     # for KxQ output stationary
-    l1_tilenum[3] *= tilesize[3]
-    tilesize[3] = 1
+    #l1_tilenum[3] *= tilesize[3]
+    #tilesize[3] = 1
     
     print(*l2_tilenum, *l1_tilenum, *tilesize, sep=',')

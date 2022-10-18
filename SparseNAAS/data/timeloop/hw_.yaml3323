@@ -1,14 +1,14 @@
 architecture:
-  bank: 8
-  group_density: 8
+  bank: 1
+  group_density: 1
   subtree:
   - local:
     - attributes:
         block-size: 1
-        read_bandwidth: 6
+        read_bandwidth: 18.39095783956757
         width: 8
         word-bits: 8
-        write_bandwidth: 0.9
+        write_bandwidth: 19.81283316880553
       class: DRAM
       name: DRAM
     name: system
@@ -19,10 +19,10 @@ architecture:
       - attributes:
           block-size: 1
           depth: 883993600
-          read_bandwidth: 96
+          read_bandwidth: 64
           width: 8
           word-bits: 8
-          write_bandwidth: 256
+          write_bandwidth: 32
         class: regfile
         name: L2
       name: SIMD
@@ -61,5 +61,5 @@ architecture:
                 datawidth: 8
               class: intmac
               name: MACC
-            name: PE[0..7]
+            name: PE[0..31]
   version: 0.3

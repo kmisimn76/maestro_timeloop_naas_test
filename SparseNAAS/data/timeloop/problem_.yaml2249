@@ -3,7 +3,7 @@ problem:
     C: 128
     Hdilation: 1
     Hstride: 1
-    M: 512
+    M: 672
     N: 1
     P: 28
     Q: 28
@@ -13,7 +13,7 @@ problem:
     Wstride: 1
     densities:
       Inputs:
-        density: 0.9382331490000001
+        density: 1.0
         distribution: fixed-structured
   shape:
     coefficients:

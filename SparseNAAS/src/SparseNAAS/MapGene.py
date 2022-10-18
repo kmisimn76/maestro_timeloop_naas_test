@@ -31,9 +31,12 @@ class MAPPING_GENE (IntEnum):
     L1_TILE_SIZE_R  = 22
     L1_TILE_SIZE_S  = 23
 
+## Design Space Constraints
+
 class _MapGene(object):
     def get_sample_gene(self):
         return [6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+        #return [6,5,4,3,2,1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
     def generate_random_gene(self):
         ArrTileSizeK = random.random() #0~1
         ArrTileSizeC = random.random()
