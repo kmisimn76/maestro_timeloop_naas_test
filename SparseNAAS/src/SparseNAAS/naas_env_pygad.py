@@ -24,6 +24,7 @@ action_space = [act * bound for act, bound in zip(action_space, action_bound)]
 start_range, end_range = 0, len(action_space[0])
 
 from HWGene import _HWGene, HW_GENE
+from HWGene import *
 HWGene = _HWGene()
 from MapGene import _MapGene, MAPPING_GENE
 MapGene = _MapGene()
@@ -32,6 +33,7 @@ from TimeloopEstimation import TimeloopEstimator
 from SparseloopEstimation import SparseloopEstimator
 from SparseAccelEstimation import SparseAccelEstimator
 from FPGAConstraint.AlveoU200 import Constraint_AlveoU200_Sparse
+
 
 class NAAS(object):
 
@@ -384,17 +386,26 @@ class NAAS(object):
         logger.debug("Number of parents: " + str(num_parents))
 
         # Allocate population & init
-        from CMAES_mapper import HWGene_mapper, MapGene_mapper, HWGene_inverse_mapper, MapGene_inverse_mapper
+        from PyGAD_mapper import HWGene_mapper, MapGene_mapper, HWGene_inverse_mapper, MapGene_inverse_mapper
 
-        hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
-        hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
-        source_solutions = []
-        for p in range(num_pop):
-            gad_population = []
-            gad_population += HWGene_inverse_mapper(hw_new_population[p])
-            for l in range(num_layers):
-                gad_population += MapGene_inverse_mapper(map_new_population[l][p])
-            source_solutions.append(gad_population)
+        import pickle
+        initial_pop_filename = "initalpop.bin"
+        if os.path.exists(initial_pop_filename):
+            with open(initial_pop_filename, "rb") as fp:
+                source_solutions = pickle.load(fp)
+        else:
+            hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
+            hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
+            source_solutions = []
+            for p in range(num_pop):
+                gad_population = []
+                gad_population += HWGene_inverse_mapper(hw_new_population[p])
+                for l in range(num_layers):
+                    gad_population += MapGene_inverse_mapper(map_new_population[l][p])
+                source_solutions.append(gad_population)
+            with open(initial_pop_filename, "wb") as fp:
+                pickle.dump(source_solutions, fp)
+
 
         # Get HW&mapping fitness for new pop
         #hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
@@ -412,7 +423,7 @@ class NAAS(object):
                 map_gene = MapGene_mapper(x[len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)])
                 reward, cosntraint = self.exterior_search(0, self.model_defs[l], hw_gene, map_gene)
                 if reward is None or reward is float("-inf") or -(10**20)>reward or fitness is float("-inf"):
-                    fitness = float("-inf")
+                    fitness = float("-1e16") #float("-inf")
                 else:
                     fitness += reward
             return fitness
@@ -420,32 +431,98 @@ class NAAS(object):
         def print_fitness(solution ,fitness):
             print(fitness)
             x_best = solution.best_solution()[0]
-            print("{:.5e}".format(solution.best_solution()[1]))
+            #print("{:.5e}".format(solution.best_solution()[1]))
             #print(max(fitness))
+            total_reward = 0
+            hw_gene = HWGene_mapper(x_best[0:len(HW_GENE)])
+            for lr_i in range(num_layers):
+                map_gene = MapGene_mapper(x_best[len(HW_GENE)+lr_i*len(MAPPING_GENE):len(HW_GENE)+(lr_i+1)*len(MAPPING_GENE)])
+                reward, cosntraint = self.exterior_search(0, self.model_defs[lr_i], hw_gene, map_gene)
+                total_reward += reward
+            print('current best reward: ', total_reward)
 
             hw_gene_best = HWGene_mapper(x_best[0:len(HW_GENE)])
             map_gene_best = MapGene_mapper(x_best[len(HW_GENE)+0*len(MAPPING_GENE):len(HW_GENE)+1*len(MAPPING_GENE)])
             best_tmp_results = self.timeloop_estimator.get_gene_HW_info(self.model_defs[0], hw_gene_best, map_gene_best)
             print("Best sol(Xdim, X, Ydim, Y, group_density, bank): ", best_tmp_results)
 
+            self.best_rewards_iteration.append(len(self.best_rewards_iteration))
+            self.best_rewards.append(total_reward)
+
+        naas_gene_space = [
+                    #HW gene
+                    None,
+                    None,
+                    range(MIN_PE, MAX_PE+1),#PE
+                    range(1, 1000+1), #BW
+                    [2], #NumDim
+                    None, #DIMSize0
+                    None,
+                    None,
+                    range(1,6+1), #ParDimK
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(0, MAX_GROUP+1), #group density
+                    range(MIN_BANK, 4+1), #bank
+                    range(100, 4*128000+1), #L2Buf_weight
+                    range(100, 4*128000+1),
+                    range(100, 4*128000+1),
+                    None, #L1Buf_weight
+                    None,
+                    None,
+                   ]
+        for l in range(num_layers):
+            naas_gene_space += [
+                #Map gene
+                range(1,6+1), #ARR_LOOP_ORDER_K
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                None, #ARR_TILE_SIZE_K
+                None,
+                None,
+                None,
+                None,
+                None,
+                range(1,6+1), #PE_LOOP_ORDER_K
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                None, #L1_TILE_SIZE_K
+                None,
+                None,
+                None,
+                None,
+                None,
+            ]
         import pygad
         ga_instance = pygad.GA(
                        num_generations=num_gen,
-                       num_parents_mating=num_parents,
+                       num_parents_mating=num_parents*2,
                        fitness_func=get_a_fitness,
                        initial_population=source_solutions,
                        sol_per_pop=num_pop,
                        num_genes=(len(HW_GENE) + len(MAPPING_GENE)*num_layers),
-                       parent_selection_type="sss", #"sss",
+                       parent_selection_type="rws", #"sss",
                        #keep_parents=num_parents,
                        keep_elitism=num_parents,
                        crossover_type="single_point",
-                       #mutation_type="random",
-                       #mutation_percent_genes=10,
-                       mutation_type="adaptive",
-                       mutation_probability=[0.25, 0.1],
+                       mutation_type="random",
+                       mutation_percent_genes=10,
+                       #mutation_type="adaptive",
+                       #mutation_probability=[0.25, 0.1],
                        random_mutation_min_val=0,
                        random_mutation_max_val=1,
+                       init_range_low=0,
+                       init_range_high=1,
+                       gene_space=naas_gene_space,
                        on_fitness=print_fitness)
         
         ga_instance.run()
@@ -495,6 +572,7 @@ class NAAS(object):
             self.save_chkpt()
         # == end of HW GA
         '''
+        self.save_chkpt()
 
         import shutil
         outdir = self.outdir #'../../data/best'

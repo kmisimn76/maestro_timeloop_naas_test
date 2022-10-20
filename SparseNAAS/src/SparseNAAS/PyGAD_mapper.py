@@ -134,7 +134,75 @@ def quadratic(x1, x2):
     return (x1 - 3) ** 2 + (10 * (x2 + 2)) ** 2
 
 if __name__ == "__main__":
+    def get_a_fitness(solution, solution_idx):
+        return -1.0
+
+    def print_fitness(solution, fitness):
+        print()
+        print()
+        print()
+        print(solution.best_solution()[0].tolist())
+        print()
+        print()
+        print()
     import pygad
+    num_gen = 1
+    num_parents = 5
+    num_pop = 10
+    num_layers = 53
+    naas_gene_space = [
+                    #HW gene
+                    None,
+                    None,
+                    range(MIN_PE, MAX_PE+1),#PE
+                    range(1, 1000+1), #BW
+                    [2], #NumDim
+                    None, #DIMSize0
+                    None,
+                    None,
+                    range(1,6+1), #ParDimK
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(1,6+1),
+                    range(0, MAX_GROUP+1), #group density
+                    range(MIN_BANK, 4+1), #bank
+                    range(100, 4*128000+1), #L2Buf_weight
+                    range(100, 4*128000+1),
+                    range(100, 4*128000+1),
+                    None, #L1Buf_weight
+                    None,
+                    None,
+                   ]
+    for l in range(num_layers):
+        naas_gene_space += [
+                #Map gene
+                range(1,6+1), #ARR_LOOP_ORDER_K
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                None, #ARR_TILE_SIZE_K
+                None,
+                None,
+                None,
+                None,
+                None,
+                range(1,6+1), #PE_LOOP_ORDER_K
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                range(1,6+1),
+                None, #L1_TILE_SIZE_K
+                None,
+                None,
+                None,
+                None,
+                None,
+            ]
     ga_instance = pygad.GA(
                    num_generations=num_gen,
                    num_parents_mating=num_parents,
@@ -152,7 +220,11 @@ if __name__ == "__main__":
                    mutation_probability=[0.25, 0.1],
                    random_mutation_min_val=0,
                    random_mutation_max_val=1,
-                   on_fitness=print_fitness)
+                   init_range_low=0,
+                   init_range_high=1,
+                   gene_space=naas_gene_space,
+                   on_fitness=print_fitness
+                   )
     
     ga_instance.run()
 

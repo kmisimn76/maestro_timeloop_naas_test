@@ -87,6 +87,7 @@ class _MapGene(object):
             parent2_idx = np.random.randint(0, parents.shape[0])
             for i in range(len(MAPPING_GENE)):
                 offspring[k][i] = parents[parent1_idx][i] if random.randint(0,1)==0 else parents[parent2_idx][i] #crossover 1:1
+                #offspring[k][i] = parents[parent1_idx][i] if 0==0 else parents[parent2_idx][i] #crossover 1:1
         return offspring
 
     #MapGene

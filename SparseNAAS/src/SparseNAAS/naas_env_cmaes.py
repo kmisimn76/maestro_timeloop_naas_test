@@ -386,8 +386,36 @@ class NAAS(object):
         # Allocate population & init
         from CMAES_mapper import HWGene_mapper, MapGene_mapper, HWGene_inverse_mapper, MapGene_inverse_mapper
 
-        hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
-        hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
+        import pickle
+        initial_pop_filename = "initalpop_ours.bin"
+        if os.path.exists(initial_pop_filename):
+            with open(initial_pop_filename, "rb") as fp:
+                source_solutions = pickle.load(fp)
+            hw_new_population = np.empty((num_pop,len(HW_GENE)),dtype=float) # allocation
+            map_new_population = np.empty((num_layers, num_pop,len(MAPPING_GENE)),dtype=float) # allocation
+            for p in range(num_pop):
+                hw_new_population[p] = source_solutions[p][0:len(HW_GENE)]
+                for l in range(num_layers):
+                    map_new_population[l][p] = source_solutions[p][len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)]
+        else:
+            # Allocate population & init
+            hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
+            source_solutions = []
+            for p in range(num_pop):
+                gad_population = []
+                gad_population += hw_new_population[p]
+                for l in range(num_layers):
+                    gad_population += map_new_population[l][p]
+                source_solutions.append(gad_population)
+            with open(initial_pop_filename, "wb") as fp:
+                pickle.dump(source_solutions, fp)
+            logger.debug("[SYSTEM] Generated intial {} population".format(num_pop))
+
+        #hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
         source_solutions = []
         for p in range(num_pop):
             cma_population = []
@@ -427,13 +455,40 @@ class NAAS(object):
             cma_population = []
             hw_new_population = []
             map_new_population = [[] for i in range(num_layers)]
-            for _ in range(optimizer.population_size):
+
+            '''
+            for _ in range(num_pop):
                 x = optimizer.ask()
                 cma_population.append(x)
                 hw_new_population.append(HWGene_mapper(x[0:len(HW_GENE)]))
                 for l in range(num_layers):
                     map_new_population[l].append(MapGene_mapper(x[len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)]))
-            hw_fitness, map_fitness = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                hw_fitness, map_fitness = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
+            '''
+            hw_fitness = []
+            while len(cma_population) < num_pop:
+                cma_population_sample = []
+                hw_new_population = []
+                map_new_population = [[] for i in range(num_layers)]
+                for _ in range(num_pop):
+                    x = optimizer.ask()
+                    cma_population_sample.append(x)
+                    hw_new_population.append(HWGene_mapper(x[0:len(HW_GENE)]))
+                    for l in range(num_layers):
+                        map_new_population[l].append(MapGene_mapper(x[len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)]))
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    hw_fitness_sample, map_fitness_sample = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
+                for p in range(num_pop):
+                    if hw_fitness_sample[p] > float("-1e14"):
+                        print(hw_fitness_sample[p])
+                        cma_population.append(cma_population_sample[p])
+                        hw_fitness.append(hw_fitness_sample[p])
+                    if len(cma_population) >= num_pop:
+                        break
+                print("pop inserted {}/{}".format(len(cma_population), num_pop))
             solutions = []
             for p in range(num_pop):
                 solutions.append((cma_population[p], hw_fitness[p]))

@@ -14,7 +14,6 @@ from bayes_opt import BayesianOptimization
 from scipy import optimize
 from multiprocessing import Process, Queue
 
-
 use_maestro = False
 use_sparseloop = False #True
 
@@ -288,7 +287,7 @@ class NAAS(object):
         map_fitness = np.empty((num_layers, num_pop), float)
         invalid_count = 0
         pbar = tqdm(total=num_layers*num_pop, desc="GA: Get fitness")
-        max_num_thread = 256
+        max_num_thread = 48
         n_ = 0
         reward = np.empty((num_pop, num_layers), float)
         constraint = np.empty((num_pop, num_layers), float)
@@ -383,9 +382,34 @@ class NAAS(object):
         logger.debug("Number of population: " + str(num_pop))
         logger.debug("Number of parents: " + str(num_parents))
 
-        # Allocate population & init
-        hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
-        logger.debug("[SYSTEM] Generated intial {} population".format(num_pop))
+        from PyGAD_mapper import HWGene_mapper, MapGene_mapper, HWGene_inverse_mapper, MapGene_inverse_mapper
+
+        import pickle
+        initial_pop_filename = "initalpop_ours.bin"
+        if os.path.exists(initial_pop_filename):
+            with open(initial_pop_filename, "rb") as fp:
+                source_solutions = pickle.load(fp)
+            hw_new_population = np.empty((num_pop,len(HW_GENE)),dtype=float) # allocation
+            map_new_population = np.empty((num_layers, num_pop,len(MAPPING_GENE)),dtype=float) # allocation
+            for p in range(num_pop):
+                hw_new_population[p] = HWGene_mapper(source_solutions[p][0:len(HW_GENE)])
+                for l in range(num_layers):
+                    map_new_population[l][p] = MapGene_mapper(source_solutions[p][len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)])
+        else:
+            # Allocate population & init
+            hw_new_population, map_new_population = self.init_population(num_pop, num_layers)
+            source_solutions = []
+            for p in range(num_pop):
+                gad_population = []
+                gad_population += HWGene_inverse_mapper(hw_new_population[p])
+                for l in range(num_layers):
+                    gad_population += MapGene_inverse_mapper(map_new_population[l][p])
+                source_solutions.append(gad_population)
+            with open(initial_pop_filename, "wb") as fp:
+                pickle.dump(source_solutions, fp)
+            logger.debug("[SYSTEM] Generated intial {} population".format(num_pop))
+
+
         
 
         # Get HW&mapping fitness for new pop
@@ -401,26 +425,43 @@ class NAAS(object):
             #if generation == 10: #?
             #        self.best_reward = float("-inf")
             best_gen_reward =None
-            parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents)
-
-            offspring_crossover = HWGene.crossover(parents,
-                                            num_pop-num_parents)
-            offspring_mutation = HWGene.mutation(offspring_crossover, rate=0.08)
-
-            hw_new_population[0:parents.shape[0], :] = parents
-            hw_new_population[parents.shape[0]:, :] = offspring_mutation
-
+            hw_parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents)
+            map_parents = [[] for lr_i in range(num_layers)]
             for lr_i in range(num_layers):
-                parents = MapGene.select_parents(map_new_population[lr_i], map_fitness[lr_i],
-                                                        num_parents)
-                offspring_crossover = MapGene.crossover(parents,
-                                                        num_pop-num_parents)
-                offspring_mutation = MapGene.mutation(offspring_crossover, rate=0.08)
+                map_parents[lr_i] = MapGene.select_parents(map_new_population[lr_i], map_fitness[lr_i], num_parents)
 
-                map_new_population[lr_i][0:parents.shape[0], :] = parents
-                map_new_population[lr_i][parents.shape[0]:, :] = offspring_mutation
+            hw_offspring_mutation = []
+            map_offspring_mutation = [[] for lr_i in range(num_layers)]
+            
+            while len(hw_offspring_mutation) < num_pop-num_parents: # gather valid child
+                hw_offspring_crossover_sample = HWGene.crossover(hw_parents,
+                                                num_pop-num_parents)
+                hw_offspring_mutation_sample = HWGene.mutation(hw_offspring_crossover_sample, rate=0.08)
+    
+                map_offspring_mutation_sample = [[] for lr_i in range(num_layers)]
+                for lr_i in range(num_layers):
+                    map_offspring_crossover_sample = MapGene.crossover(map_parents[lr_i],
+                                                            num_pop-num_parents)
+                    map_offspring_mutation_sample[lr_i] = MapGene.mutation(map_offspring_crossover_sample, rate=0.08)
+                hw_fitness_sample, map_fitness_sample = self.get_fitness(generation, num_pop-num_parents, num_layers, hw_offspring_mutation_sample, map_offspring_mutation_sample)
+
+                for p in range(num_pop-num_parents):
+                    if hw_fitness_sample[p] > float("-1e14") or True:
+                        #print(hw_fitness_sample[p])
+                        hw_offspring_mutation.append(hw_offspring_mutation_sample[p])
+                        for lr_i in range(num_layers):
+                            map_offspring_mutation[lr_i].append(map_offspring_mutation_sample[lr_i][p])
+                    if len(hw_offspring_mutation) >= num_pop-num_parents:
+                        break
+
+            hw_new_population[0:hw_parents.shape[0], :] = hw_parents
+            hw_new_population[hw_parents.shape[0]:, :] = hw_offspring_mutation
+            for lr_i in range(num_layers):
+                map_new_population[lr_i][0:map_parents[0].shape[0], :] = map_parents[lr_i]
+                map_new_population[lr_i][map_parents[0].shape[0]:, :] = map_offspring_mutation[lr_i]
 
             hw_fitness, map_fitness = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
+
             for pop in range(num_pop):
                 reward = hw_fitness[pop]
                 if reward > self.best_reward:
