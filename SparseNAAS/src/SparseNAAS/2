@@ -30,20 +30,20 @@ class HW_GENE (IntEnum):
 
 ## Design Space Constraints
 MAX_PE = 12 #8
-MIN_PE = 11  #8
+MIN_PE = 10  #8
 SQUARE_SHAPE_PE = False
 WEIGHT_STATIONARY = False
 DISABLE_BANK = False
 DISABLE_GROUP = False
-MIN_BANK = 0
-MAX_GROUP = 6
+MIN_BANK = 1
+MAX_GROUP = 4
 
 class _HWGene(object):
     def get_sample_gene(self):
         return [3000, 100, 8, 50, 2, 0.5, 0.5, 0.5, 6,5,4,3,2,1, 1, 4, 10000, 10000, 10000, 0.5, 0.5, 0.5]
     def generate_random_gene(self):
-        L2Buf = random.random()
-        L1Buf = random.random()
+        L2Buf = 0
+        L1Buf = 0
         L2Buf_weight = random.randint(100, 4*128000)
         L2Buf_input = random.randint(100, 4*128000)
         L2Buf_output = random.randint(100, 4*128000)
@@ -214,7 +214,8 @@ class TIMELOOP_HW:
     def get_L1_size(self):
         return self.L1_weight_size, self.L1_input_size, self.L1_output_size
     def get_group_density(self):
-        density = self.Density if self.Density <= 2**4 else (self.X if (self.XDim==2 or self.XDim==3) else (self.Y if (self.YDim==2 or self.YDim==3) else (self.X if (self.XDim==1) else (self.Y if (self.YDim==1) else 1) ) ) )
+        density = self.Density if (int(hw_gene[HW_GENE.GROUP_DENSITY]) <= 4) else (self.X if (self.XDim==2 or self.XDim==3) else (self.Y if (self.YDim==2 or self.YDim==3) else (self.X if (self.XDim==1) else (s    elf.Y if (self.YDim==1) else 1) ) ) )
+        print(density)
         return density
     def get_bank(self):
         return self.Bank

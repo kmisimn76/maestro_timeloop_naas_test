@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 class Constraint_AlveoU200_Sparse:
-    def __init__(self, BRAM_max_size=3600, DSP_max_size=4096, group_density=4, bank=4):
+    def __init__(self, BRAM_max_size=1200, DSP_max_size=4096, group_density=4, bank=4):
         self.BRAM_max_size = BRAM_max_size # constraint for frequency performance
         self.DSP_max_size = DSP_max_size # constraint for freq. performance
 

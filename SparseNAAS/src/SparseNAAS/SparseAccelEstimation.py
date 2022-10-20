@@ -8,7 +8,7 @@ import math
 from HWGene import *
 from MapGene import *
 
-from SparseAccelEstimator.main import HW_DEF, MAPPING_DEF, calculateSparseAccel, checkLegalConstraintSparseAccel
+from SparseAccelEstimator.main import HW_DEF, MAPPING_DEF, calculateSparseAccel, checkLegalConstraintSparseAccel, checkFitBufferMappingSparseAccel
 
 df_dict = {1:"dla", 2:"shi", 3:"eye"}
 m_type_dicts = {1:"CONV", 2:"DSCONV"}
@@ -90,12 +90,14 @@ class SparseAccelEstimator():
          l1_loop_order_map[0],l1_loop_order_map[1],l1_loop_order_map[2],l1_loop_order_map[3],l1_loop_order_map[4],l1_loop_order_map[5],
          PE_map_size[0],PE_map_size[1],PE_map_size[2],PE_map_size[3],PE_map_size[4],PE_map_size[5], density)
 
-        buffer_estimated = {'l1_weight': mapping_def.K_L1 * mapping_def.C_L1 * mapping_def.R_L1 * mapping_def.S_L1,
-                            'l1_input':  mapping_def.C_L1 * mapping_def.H_L1 * mapping_def.W_L1,
-                            'l1_output': mapping_def.K_L1 * mapping_def.H_L1 * mapping_def.W_L1,
-                            'l2_weight': mapping_def.K_L2 * mapping_def.C_L2 * mapping_def.R_L2 * mapping_def.S_L2,
-                            'l2_input':  mapping_def.C_L2 * mapping_def.H_L2 * mapping_def.W_L2,
-                            'l2_output': mapping_def.K_L2 * mapping_def.H_L2 * mapping_def.W_L2
+        l1_weight, l1_input, l1_output = hw_info.get_L1_size()
+        l2_weight, l2_input, l2_output = hw_info.get_L2_size()
+        buffer_estimated = {'l1_weight': l1_weight,#mapping_def.K_L1 * mapping_def.C_L1 * mapping_def.R_L1 * mapping_def.S_L1,
+                            'l1_input':  l1_input,#mapping_def.C_L1 * mapping_def.H_L1 * mapping_def.W_L1,
+                            'l1_output': l1_output,#mapping_def.K_L1 * mapping_def.H_L1 * mapping_def.W_L1,
+                            'l2_weight': l2_weight,#mapping_def.K_L2 * mapping_def.C_L2 * mapping_def.R_L2 * mapping_def.S_L2,
+                            'l2_input':  l2_input,#mapping_def.C_L2 * mapping_def.H_L2 * mapping_def.W_L2,
+                            'l2_output': l2_output#mapping_def.K_L2 * mapping_def.H_L2 * mapping_def.W_L2
                             }
 
         return hw_def, mapping_def, buffer_estimated
@@ -132,7 +134,8 @@ class SparseAccelEstimator():
 
             target_constraint.set_constraint(group_density=hw_info.get_group_density(), bank=hw_info.get_bank())
             fpga_constraint_check = target_constraint.check_constraints(buffer_estimated, hw_info, mapping_info) if (target_constraint is not None) else True
-            sparse_accel_check_mapping = checkLegalConstraintSparseAccel(hw_def, mapping_def)
+            #sparse_accel_check_mapping = checkLegalConstraintSparseAccel(hw_def, mapping_def)
+            sparse_accel_check_mapping = checkFitBufferMappingSparseAccel(hw_def, mapping_def, buffer_estimated)
             if (sparse_accel_check_mapping is False) or (fpga_constraint_check is False): #Check constraint Invalid
                 '''
                 if gen>=10: # ignore resource check before fore generation
@@ -200,9 +203,19 @@ class SparseAccelEstimator():
                 return None, None, None, None
             hw_def, mapping_def, buffer_estimated = self.adaptor_timeloop_to_sparseaccel(dimension[i], hw_info, mapping_info)
             with open(hw_file_name, "w") as file:
+                #HW info
                 file.write(str(hw_def.ARRAY_K)+str(","))
                 file.write(str(hw_def.ARRAY_C)+str(","))
-                file.write(str(hw_def.ARRAY_W)+str("\n"))
+                file.write(str(hw_def.ARRAY_W)+str(","))
+                file.write(str(hw_info.get_group_density())+str(","))
+                file.write(str(hw_info.get_bank())+str(","))
+                file.write(str(hw_info.get_L2_size()[0])+str(","))
+                file.write(str(hw_info.get_L2_size()[1])+str(","))
+                file.write(str(hw_info.get_L2_size()[2])+str(","))
+                file.write(str(hw_info.get_L1_size()[0])+str(","))
+                file.write(str(hw_info.get_L1_size()[1])+str(","))
+                file.write(str(hw_info.get_L1_size()[2])+str("\n"))
+                #Map info
                 file.write(str(mapping_def.L2_TILENUM_K)+str(","))
                 file.write(str(mapping_def.L2_TILENUM_C)+str(","))
                 file.write(str(mapping_def.L2_TILENUM_H)+str(","))
@@ -238,5 +251,8 @@ class SparseAccelEstimator():
         hw_info, mapping_info = self.gene2mapping(dimension, hw_gene, map_gene)
         return [DIM.to_str(hw_info.get_XDim()), hw_info.get_X(), \
                 DIM.to_str(hw_info.get_YDim()), hw_info.get_Y(), \
-                hw_info.get_group_density(), hw_info.get_bank()]
+                hw_info.get_group_density(), hw_info.get_bank(),
+                hw_info.get_L2_size()[0], hw_info.get_L2_size()[1], hw_info.get_L2_size()[2],
+                hw_info.get_L1_size()[0], hw_info.get_L1_size()[1], hw_info.get_L1_size()[2]
+                ]
 

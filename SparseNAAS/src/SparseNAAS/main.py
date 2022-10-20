@@ -6,7 +6,11 @@ module_path = os.path.abspath(os.path.join(script_dir, '../../'))
 if module_path not in sys.path:
     sys.path.insert(0,module_path)
 from src.utils.get_action_space import *
+
 from naas_env import NAAS 
+#from naas_env_cmaes import NAAS  #FIXME: cmaes version
+#from naas_env_pygad import NAAS  #FIXME: pygad version
+
 from datetime import datetime
 import pickle
 import matplotlib.pyplot as plt
