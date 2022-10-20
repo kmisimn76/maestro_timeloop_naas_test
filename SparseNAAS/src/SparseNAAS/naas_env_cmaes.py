@@ -288,7 +288,7 @@ class NAAS(object):
         map_fitness = np.empty((num_layers, num_pop), float)
         invalid_count = 0
         pbar = tqdm(total=num_layers*num_pop, desc="GA: Get fitness")
-        max_num_thread = 256
+        max_num_thread = 48
         n_ = 0
         reward = np.empty((num_pop, num_layers), float)
         constraint = np.empty((num_pop, num_layers), float)
@@ -416,23 +416,30 @@ class NAAS(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
-        source_solutions = []
+        source_solutions_hw = []
+        source_solutions_map = [[] for lr_i in range(num_layers)]
         for p in range(num_pop):
-            cma_population = []
-            cma_population += HWGene_inverse_mapper(hw_new_population[p])
+            source_solutions_hw.append((HWGene_inverse_mapper(hw_new_population[p]), hw_fitness[p]))
             for l in range(num_layers):
-                cma_population += MapGene_inverse_mapper(map_new_population[l][p])
-            source_solutions.append((cma_population, hw_fitness[p]))
+                source_solutions_map[l].append((MapGene_inverse_mapper(map_new_population[l][p]), map_fitness[l][p]))
 
         from cmaes import CMA, SepCMA, get_warm_start_mgd
-        ws_mean, ws_sigma, ws_cov = get_warm_start_mgd(
-            source_solutions, gamma=0.1, alpha=0.1
-        )
+        ws_mean_hw, ws_sigma_hw, ws_cov_hw = get_warm_start_mgd(source_solutions_hw, gamma=0.1, alpha=0.1)
+        ws_mean_map, ws_sigma_map, ws_cov_map = [], [], []
+        for l in range(num_layers):
+            ws_mean, ws_sigma, ws_cov = get_warm_start_mgd(source_solutions_map[l], gamma=0.1, alpha=0.1)
+            ws_mean_map.append(ws_mean)
+            ws_sigma_map.append(ws_sigma)
+            ws_cov_map.append(ws_cov)
+
         print(ws_mean, ws_sigma, ws_cov)
-        bounds = np.array([[0, 1] for p in range(len(HW_GENE) + len(MAPPING_GENE)*num_layers)])
+        #bounds = np.array([[0, 1] for p in range(len(HW_GENE) + len(MAPPING_GENE)*num_layers)])
         #optimizer = CMA(mean=(np.ones(len(HW_GENE) + len(MAPPING_GENE)*num_layers) / 2), sigma=0.1, bounds=bounds, population_size=num_pop)
-        #optimizer = CMA(mean=ws_mean, sigma=ws_sigma, cov=ws_cov, bounds=bounds, population_size=num_pop)
-        optimizer = SepCMA(mean=ws_mean, sigma=0.1, bounds=bounds, population_size=num_pop)
+        #optimizer = SepCMA(mean=ws_mean, sigma=ws_sigma, cov=ws_cov, bounds=bounds, population_size=num_pop)
+        optimizer_hw = CMA(mean=ws_mean_hw, sigma=ws_sigma_hw, cov=ws_cov_hw, bounds=np.array([[0,1] for p in range(len(HW_GENE))]), population_size=num_pop)
+        optimizer_map = []
+        for l in range(num_layers):
+            optimizer_map.append(CMA(mean=ws_mean_map[l], sigma=ws_sigma_map[l], cov=ws_cov_map[l], bounds=np.array([[0,1] for p in range(len(MAPPING_GENE))]), population_size=num_pop))
         logger.debug("[SYSTEM] Generated intial {} population".format(num_pop))
         
 
@@ -451,14 +458,15 @@ class NAAS(object):
             best_gen_reward =None
 
             #solutions = []
-            num_pop = optimizer.population_size
+            num_pop = num_pop
             cma_population = []
             hw_new_population = []
             map_new_population = [[] for i in range(num_layers)]
 
-            '''
             for _ in range(num_pop):
-                x = optimizer.ask()
+                x = optimizer_hw.ask()
+                for l in range(num_layers):
+                    x = np.concatenate((x, optimizer_map[l].ask()))
                 cma_population.append(x)
                 hw_new_population.append(HWGene_mapper(x[0:len(HW_GENE)]))
                 for l in range(num_layers):
@@ -473,7 +481,9 @@ class NAAS(object):
                 hw_new_population = []
                 map_new_population = [[] for i in range(num_layers)]
                 for _ in range(num_pop):
-                    x = optimizer.ask()
+                    x = optimizer_hw.ask()
+                    for l in range(num_layers):
+                        x = np.concatenate((x, optimizer_map[l].ask()))
                     cma_population_sample.append(x)
                     hw_new_population.append(HWGene_mapper(x[0:len(HW_GENE)]))
                     for l in range(num_layers):
@@ -486,13 +496,20 @@ class NAAS(object):
                         print(hw_fitness_sample[p])
                         cma_population.append(cma_population_sample[p])
                         hw_fitness.append(hw_fitness_sample[p])
+                        map_fitness[l].append(map_fitness_sample[l][p])
                     if len(cma_population) >= num_pop:
                         break
                 print("pop inserted {}/{}".format(len(cma_population), num_pop))
-            solutions = []
+            '''
+            solutions_hw = []
+            solutions_map = [[] for i in range(num_layers)]
             for p in range(num_pop):
-                solutions.append((cma_population[p], hw_fitness[p]))
-            optimizer.tell(solutions)
+                solutions_hw.append((cma_population[p][0:len(HW_GENE)], hw_fitness[p]))
+                for l in range(num_layers):
+                    solutions_map[l].append((cma_population[p][len(HW_GENE)+l*len(MAPPING_GENE):len(HW_GENE)+(l+1)*len(MAPPING_GENE)], map_fitness[l][p]))
+            optimizer_hw.tell(solutions_hw)
+            for l in range(num_layers):
+                optimizer_map[l].tell(solutions_map[l])
             for pop in range(num_pop):
                 reward = hw_fitness[pop]
                 if reward > self.best_reward:
