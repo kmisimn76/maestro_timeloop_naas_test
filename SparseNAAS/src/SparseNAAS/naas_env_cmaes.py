@@ -282,7 +282,7 @@ class NAAS(object):
         pbar.close()
         return hw_new_population, map_new_population
 
-    def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
+    def get_fitness_(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
         # get HW/Mapping fitness
         hw_fitness = np.empty(num_pop, float)
         map_fitness = np.empty((num_layers, num_pop), float)
@@ -339,6 +339,90 @@ class NAAS(object):
             hw_fitness[i] = tot_reward
             #for j in range(num_layers): #FIXME
                 #map_fitness[j][i] = hw_fitness[i] #FIXME
+        print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
+        return hw_fitness, map_fitness
+
+    def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
+        # get HW/Mapping fitness
+        hw_fitness = np.empty(num_pop, float)
+        map_fitness = np.empty((num_layers, num_pop), float)
+        invalid_count = 0
+        pbar = tqdm(total=num_layers*num_pop*num_pop, desc="GA: Get fitness")
+        max_num_thread = 48
+        n_ = 0
+        reward = np.empty((num_pop, num_pop, num_layers), float)
+        constraint = np.empty((num_pop, num_pop, num_layers), float)
+        '''
+        while True:
+            que = Queue()
+            threads = []
+            for th_ in range(max_num_thread):
+                i = (n_//num_layers)//num_pop #pop
+                j = (n_//num_layers)%num_pop #pop
+                l = n_%num_layers #layer
+                hw_gene = hw_new_population[i]
+                map_gene = map_new_population[l][j]
+                t = Process(target=self.exterior_search, args=(gen, self.model_defs[l], hw_gene, map_gene, (i*(num_pop)+j)*num_layers+l, que))
+                t.start()
+                threads.append(t)
+                n_ += 1
+                if n_ >= num_layers*num_pop: break
+            ln = len(threads)
+            for t in threads:
+                t.join()
+                pbar.update(1)
+            for thn_ in range(ln):
+                result_n_, reward_, constraint_ = que.get()
+                if reward_  == None or constraint_ > self.constraint_value:
+                    reward_ = float("-inf")
+                i = (result_n_//num_layers)//num_pop #pop
+                j = (result_n_//num_layers)%num_pop #pop
+                l = result_n_%num_layers #layer
+                reward[i][j][l] = reward_
+                constraint[i][j][l] = constraint_
+            if n_ >= num_layers*num_pop*num_pop: break
+        '''
+        for i in range(num_pop):
+            for j in range(num_pop):
+                for l in range(num_layers):
+                    hw_gene = hw_new_population[i]
+                    map_gene = map_new_population[l][j]
+                    reward_, constraint_ = self.exterior_search(gen, self.model_defs[l], hw_gene, map_gene)
+                    if reward_ is None: reward_ = float("-inf")
+                    reward[i][j][l] = reward_
+                    constraint[i][j][l] = constraint_
+                    pbar.update(1)
+        pbar.close()
+        #get fitness
+        '''
+        for i in range(num_pop):
+            tot_reward = 0
+            tot_constraint = 0
+            for j in range(num_layers):
+                map_fitness[j][i] = reward[i][j] #FIXME
+                if reward[i][j] is float("-inf") or -(10**20)>reward[i][j] or tot_reward is float("-inf"):
+                    tot_reward = float("-inf")
+                else:
+                    tot_reward += reward[i][j]
+                tot_constraint = constraint[i][j]
+            if tot_reward is None or tot_reward is float("-inf") or -(10**20)>tot_reward or tot_reward is float("inf"): # Can't compilation
+                tot_reward = float("-inf")
+                invalid_count += 1
+            elif tot_constraint is None or tot_constraint > self.constraint_value:
+                tot_reward = float("-inf")
+                invalid_count += 1
+            hw_fitness[i] = tot_reward
+            #for j in range(num_layers): #FIXME
+                #map_fitness[j][i] = hw_fitness[i] #FIXME
+        '''
+        for i in range(num_pop):
+            hw_fitness[i] = 0
+            for l in range(num_layers):
+                hw_fitness[i] += max([reward[i][j][l] for j in range(num_pop)])
+        for l in range(num_layers):
+            for j in range(num_pop):
+                map_fitness[l][j] = max([reward[i][j][l] for i in range(num_pop)])
+        print(hw_fitness)
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
         return hw_fitness, map_fitness
 

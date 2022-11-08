@@ -38,6 +38,7 @@ def HWGene_mapper(vector):
     hw_gene[HW_GENE.L1_WEIGHT_SIZE] = vector[HW_GENE.L1_WEIGHT_SIZE]
     hw_gene[HW_GENE.L1_INPUT_SIZE] = vector[HW_GENE.L1_INPUT_SIZE]
     hw_gene[HW_GENE.L1_OUTPUT_SIZE] = vector[HW_GENE.L1_OUTPUT_SIZE]
+    hw_gene[HW_GENE.USE_SPARSITY] = vector[HW_GENE.USE_SPARSITY]
     return hw_gene
 
 def MapGene_mapper(vector):
@@ -96,6 +97,7 @@ def HWGene_inverse_mapper(vector):
     cma_hw_gene[HW_GENE.L1_WEIGHT_SIZE] = vector[HW_GENE.L1_WEIGHT_SIZE]
     cma_hw_gene[HW_GENE.L1_INPUT_SIZE] = vector[HW_GENE.L1_INPUT_SIZE]
     cma_hw_gene[HW_GENE.L1_OUTPUT_SIZE] = vector[HW_GENE.L1_OUTPUT_SIZE]
+    cma_hw_gene[HW_GENE.USE_SPARSITY] = vector[HW_GENE.USE_SPARSITY]
     return cma_hw_gene
 
 def MapGene_inverse_mapper(vector):

@@ -85,16 +85,16 @@ class SparseloopEstimator():
         bank = hw_info.get_bank()
 
         #old
-        #input_bandwidth  = max(hw_map[DIM.C], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.K]==1 else bank)
-        #weight_bandwidth = max(hw_map[DIM.K], hw_map[DIM.C]) * (1 if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else bank)
-        #output_bandwidth = max(hw_map[DIM.K], hw_map[DIM.X], hw_map[DIM.Y]) * (1 if hw_map[DIM.C]==1 else bank)
+        #input_bandwidth  = max(hw_map[DIM.C], hw_map[DIM.W], hw_map[DIM.H]) * (1 if hw_map[DIM.K]==1 else bank)
+        #weight_bandwidth = max(hw_map[DIM.K], hw_map[DIM.C]) * (1 if (hw_map[DIM.W]==1 and hw_map[DIM.H]==1) else bank)
+        #output_bandwidth = max(hw_map[DIM.K], hw_map[DIM.W], hw_map[DIM.H]) * (1 if hw_map[DIM.C]==1 else bank)
         #new
-        WEIGHT_STATIONARY = True if (hw_map[DIM.X]==1 and hw_map[DIM.Y]==1) else False
+        WEIGHT_STATIONARY = True if (hw_map[DIM.W]==1 and hw_map[DIM.H]==1) else False
         OUTPUT_STATIONARY = True if (hw_map[DIM.C]==1) else False
         INPUT_STATIONARY = True if (hw_map[DIM.K]==1) else False
-        input_bandwidth  = (hw_map[DIM.C] if WEIGHT_STATIONARY else max(hw_map[DIM.X],hw_map[DIM.Y])) * (1 if INPUT_STATIONARY else bank)
+        input_bandwidth  = (hw_map[DIM.C] if WEIGHT_STATIONARY else max(hw_map[DIM.W],hw_map[DIM.H])) * (1 if INPUT_STATIONARY else bank)
         weight_bandwidth = (hw_map[DIM.C] if INPUT_STATIONARY  else hw_map[DIM.K]) * (1 if WEIGHT_STATIONARY else bank)
-        output_bandwidth = (hw_map[DIM.K] if WEIGHT_STATIONARY else max(hw_map[DIM.X],hw_map[DIM.Y])) * (1 if OUTPUT_STATIONARY else bank)
+        output_bandwidth = (hw_map[DIM.K] if WEIGHT_STATIONARY else max(hw_map[DIM.W],hw_map[DIM.H])) * (1 if OUTPUT_STATIONARY else bank)
 
         data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth
         data_L2['attributes']['write_bandwidth'] = output_bandwidth

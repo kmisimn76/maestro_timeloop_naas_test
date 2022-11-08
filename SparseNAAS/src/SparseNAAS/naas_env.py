@@ -10,9 +10,9 @@ if module_path not in sys.path:
 from src.utils.get_action_space import *
 import copy
 from tqdm import tqdm
-from bayes_opt import BayesianOptimization
-from scipy import optimize
-from multiprocessing import Process, Queue
+#from bayes_opt import BayesianOptimization
+#from scipy import optimize
+from multiprocessing import Process, Queue, Manager, Lock
 
 use_maestro = False
 use_sparseloop = False #True
@@ -194,6 +194,24 @@ class NAAS(object):
             return False
         return True
 
+    def init_population_worker(self, lock, hw_pop_pool, num_pop, num_layers):
+        while len(hw_pop_pool) < num_pop:
+            fit = float("-inf")
+            last_pop = HWGene.generate_random_gene()
+            last_cnt = 0
+            while fit < float("-1e14"):
+                hw_new_pop = HWGene.generate_random_gene()
+                hw_fitness, map_fitness, _ = self.get_fitness(0, 1, num_layers, [hw_new_pop], [[MapGene.generate_random_gene()] for _ in range(num_layers)], verbose=False)
+                last_cnt = last_cnt+1 if (sum([0 if last_pop[i]==hw_new_pop[i] else 1 for i in range(len(hw_new_pop))]) == 0) else 0
+                last_pop = hw_new_pop
+                if max(map_fitness) > float("-1e14") or (last_cnt > 5):
+                    break
+            print("!")
+            lock.acquire()
+            hw_pop_pool.append(hw_new_pop)
+            lock.release()
+
+
     def init_population(self, num_pop, num_layers):
         # Allocate&Initialize VALID population
         hw_new_population = np.empty((num_pop,len(HW_GENE)),dtype=float) # allocation
@@ -201,87 +219,73 @@ class NAAS(object):
         sample_hw_gene = np.array(HWGene.get_sample_gene(), dtype=float).copy()
         sample_map_gene = np.array(MapGene.get_sample_gene(), dtype=float).copy()
 
-        thread_number = 256
-        count = 0
-        pbar = tqdm(total=num_pop, desc="Initalize New HW Populations")
-        while count<num_pop:
-            # PE Pop
-            reward = None
-            constraint = None
-            que = Queue()
-            threads = []
-            rand_gene = []
-            for n_ in range(thread_number):
-                rand_gene.append(HWGene.generate_random_gene())
-                t = Process(target=self.exterior_search, args=(0, self.model_defs[0], rand_gene[n_], sample_map_gene, n_, que))
-                t.start()
-                threads.append(t)
-            for t in threads:
-                t.join()
-            for n_ in range(thread_number):
-                i_, reward, constraint = que.get()
-                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and count<num_pop: #select valid gene. Incorrect, but more score
-                #if not(reward==None or (constraint==None or constraint > self.constraint_value)) and count<num_pop: #select valid gene. Correct, but less score
-                    hw_new_population[count] = np.array(rand_gene[i_], dtype=float).copy()
-                    count += 1
-                    pbar.update(1)
+        from time import time
+        '''
+        for i in range(num_pop):
+            fit = float("-inf")
+            while fit < float("-1e14"):
+                hw_new_population[i] = HWGene.generate_random_gene()
+                start = time()
+                #for it in range(100):
+                #    hw_fitness, _, _ = self.get_fitness(0, 1, 1, [hw_new_population[i]], [[MapGene.get_sample_gene(seed1=(it+1)/100, seed2=0.01)]], specific_layer=random.randint(1,num_layers-1), verbose=False)
+                #    #hw_fitness, _, _ = self.get_fitness(0, 1, 1, [hw_new_population[i]], [[MapGene.generate_random_gene()]], verbose=False)
+                #    fit = max(fit, hw_fitness[0])
+                #    if fit > float("-1e14"): break
+                hw_fitness, map_fitness, _ = self.get_fitness(0, 1, num_layers, [hw_new_population[i]], [[MapGene.generate_random_gene()] for _ in range(num_layers)], verbose=False)
+                if max(map_fitness) > float("-1e14"):
+                    break
+                end = time()
+                #print((end - start)*1000)
+            print("!")
+        '''
+        threads = []
+        num_thread = 48
+        manager = Manager()
+        hw_pop_pool = manager.list()
+        lock = Lock()
+        for n in range(num_thread):
+            t = Process(target=self.init_population_worker, args=( lock, hw_pop_pool, num_pop, num_layers))
+            t.start()
+            threads.append(t)
+        for t in threads:
+            t.join()
+        for i in range(num_pop):
+            hw_new_population[i] = hw_pop_pool[i]
+
+        for i in range(num_pop):
+            for l in range(num_layers):
+                map_new_population[l][i] = MapGene.generate_random_gene()
+
+        print("Setting initial populations")
+
+        pbar = tqdm(total=(1+num_layers)*num_pop, desc="Initalize New HW Populations")
+
+        invalid_count = num_pop*(1+num_layers)
+        while invalid_count > (1+num_layers)*num_pop//10: # 90% pop must satify constraint
+            hw_fitness, map_fitness, _ = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population, verbose=False)
+            invalid_count = 0
+            for i in range(num_pop):
+                if hw_fitness[i] is None or hw_fitness[i] <= float("-1e14"):
+                    invalid_count += 1
+                    hw_new_population[i] = HWGene.generate_random_gene()
+            for j in range(num_pop):
+                for l in range(num_layers):
+                    if map_fitness[l][j] is None or map_fitness[l][j] <= float("-1e14"):
+                        invalid_count += 1
+                        map_new_population[l][j] = MapGene.generate_random_gene()
+
+            pbar.n = num_pop*(1+num_layers) - invalid_count
+            pbar.refresh()
+            if num_pop*(1+num_layers) - invalid_count == 0:
+                print("initialization failed. please re run")
+                exit()
         pbar.close()
 
-        thread_number = 256#16*8
-        count = 0
-        pbar = tqdm(total=num_layers*num_pop, desc="Initalize New Map Populations")
-        '''
-        while count<num_layers*num_pop:
-            # Map Pop for each layers
-            reward = None
-            que = Queue()
-            threads = []
-            rand_gene = []
-            for n_ in range(thread_number):
-                rand_gene.append(MapGene.generate_random_gene())
-                ly_n = random.randint(0, num_layers-1)
-                h_g_n = random.randint(0, num_pop-1)
-                t = Process(target=self.exterior_search, args=(0, self.model_defs[ly_n], hw_new_population[h_g_n], rand_gene[n_], n_, que))
-                t.start()
-                threads.append(t)
-            for t in threads:
-                t.join()
-            for n_ in range(thread_number):
-                i_, reward, constraint = que.get()
-                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and count<num_layers*num_pop: #select valid gene
-                    map_new_population[count//num_pop][count%num_pop] = np.array(rand_gene[i_], dtype=float).copy()
-                    count += 1
-                    pbar.update(1)
-        pbar.close()
-        '''
-        while count<num_layers*num_pop:
-            # Map Pop for each layers
-            reward = None
-            que = Queue()
-            threads = []
-            rand_gene = []
-            for n_ in range(thread_number):
-                rand_gene.append(MapGene.generate_random_gene())
-                n_cnt = count+n_//32 if (count+i_//32)<num_layers*num_pop else count
-                ly_n = (n_cnt)//num_pop
-                h_g_n = (n_cnt)%num_pop
-                t = Process(target=self.exterior_search, args=(0, self.model_defs[ly_n], hw_new_population[h_g_n], rand_gene[n_], n_, que))
-                t.start()
-                threads.append(t)
-            for t in threads:
-                t.join()
-            for n_ in range(thread_number):
-                i_, reward, constraint = que.get()
-                if not(reward==None and (constraint==None or constraint > self.constraint_value)) and (count+i_//32)<num_layers*num_pop: #select valid gene
-                    map_new_population[(count+i_//32)//num_pop][(count+i_//32)%num_pop] = np.array(rand_gene[i_], dtype=float).copy()
-                    #count += 1
-                    #pbar.update(1)
-            count += 256//32
-            pbar.update(256//32)
-        pbar.close()
+        print("Initial pops: ", hw_new_population)
+
         return hw_new_population, map_new_population
 
-    def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
+    def get_fitness_(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
         # get HW/Mapping fitness
         hw_fitness = np.empty(num_pop, float)
         map_fitness = np.empty((num_layers, num_pop), float)
@@ -341,6 +345,92 @@ class NAAS(object):
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
         return hw_fitness, map_fitness
 
+
+    def get_fitness_proc(self, gen, num_pop, num_layers, hw_new_population, map_new_population, n, num_hw_pop, reward, constraint, return_dict, pbar,verbose=True):
+        for i in range(n*num_hw_pop, min(num_pop, (n+1)*num_hw_pop)):
+            for j in range(num_pop):
+                for l in range(num_layers):
+                    hw_gene = hw_new_population[i]
+                    map_gene = map_new_population[l][j]
+                    reward_, constraint_ = self.exterior_search(gen, self.model_defs[l], hw_gene, map_gene)
+                    if reward_ is None: reward_ = float("-inf")
+                    reward[i][j][l] = reward_
+                    constraint[i][j][l] = constraint_
+                    if verbose and n==0:
+                        pbar.update(math.ceil(num_pop/num_hw_pop))
+        return_dict[n] = (reward, constraint)
+
+    def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population, specific_layer=None, verbose=True):
+        # get HW/Mapping fitness
+        hw_fitness = np.empty(num_pop, float)
+        map_fitness = np.empty((num_layers, num_pop), float)
+        invalid_count = 0
+        if verbose:
+            pbar = tqdm(total=num_layers*num_pop*num_pop, desc="GA: Get fitness")
+        else:
+            pbar = None
+        n_ = 0
+        reward = np.empty((num_pop, num_pop, num_layers), float)
+        constraint = np.empty((num_pop, num_pop, num_layers), float)
+
+        if num_pop < 10:
+            for i in range(num_pop):
+                for j in range(num_pop):
+                    for l in range(num_layers):
+                        hw_gene = hw_new_population[i]
+                        map_gene = map_new_population[l][j]
+                        reward_, constraint_ = self.exterior_search(gen, self.model_defs[l if specific_layer is None else specific_layer], hw_gene, map_gene)
+                        if reward_ is None: reward_ = float("-inf")
+                        reward[i][j][l] = reward_
+                        constraint[i][j][l] = constraint_
+                        if verbose:
+                            pbar.update(1)
+        else:
+            threads = []
+            num_thread = 25
+            manager = Manager()
+            return_dict = manager.dict()
+            #for n in range(math.ceil(num_pop/num_thread)):
+            for n in range(num_thread):
+                t = Process(target=self.get_fitness_proc, args=(gen, num_pop, num_layers, hw_new_population, map_new_population, n, math.ceil(num_pop/num_thread), reward, constraint, return_dict, pbar, verbose))
+                t.start()
+                threads.append(t)
+            for t in threads:
+                t.join()
+
+            for n in range(num_thread):
+                reward_dict = return_dict[n][0]
+                reward_const = return_dict[n][1]
+                for i in range(n*(math.ceil(num_pop/num_thread)), min(num_pop, (n+1)*(math.ceil(num_pop/num_thread)))):
+                    for j in range(num_pop):
+                        for l in range(num_layers):
+                            reward[i][j][l] = reward_dict[i][j][l]
+                            constraint[i][j][l] = reward_const[i][j][l]
+        if verbose:
+            pbar.close()
+
+        #get fitness
+        invalid_count = 0
+        for i in range(num_pop):
+            hw_fitness[i] = 0
+            for l in range(num_layers):
+                hw_fitness[i] += max([reward[i][j][l] for j in range(num_pop)])
+            if hw_fitness[i] is None or hw_fitness[i] <= float("-1e14"):
+                invalid_count += 1
+        for l in range(num_layers):
+            for j in range(num_pop):
+                map_fitness[l][j] = max([reward[i][j][l] for i in range(num_pop)])
+        if verbose:
+            hw_valid_fitness = [hw_fitness[i] for i in range(num_pop)]
+            hw_valid_fitness = np.array(list(filter(lambda x: x > float("-1e14"), hw_valid_fitness)))
+            print("fitness result")
+            print("- HW fitness info(min, max, mean, var, # valid): ", "{:2e} {:2e} {:2e} {:2e} {}".format(min(hw_valid_fitness), max(hw_valid_fitness), hw_valid_fitness.mean(), hw_valid_fitness.var()**0.5, np.sum(hw_fitness != float("-inf"))))
+            print("- Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
+
+        return hw_fitness, map_fitness, reward
+
+
+
     def genetic_search(self, epochs=100, chkpt_file="genetic_chkpt.plt",fd=None):
         import logging
         import time
@@ -385,7 +475,8 @@ class NAAS(object):
         from PyGAD_mapper import HWGene_mapper, MapGene_mapper, HWGene_inverse_mapper, MapGene_inverse_mapper
 
         import pickle
-        initial_pop_filename = "initalpop_ours.bin"
+        #initial_pop_filename = "initalpop_ours.bin"
+        initial_pop_filename = "initalpop_ours_fp.bin"
         if os.path.exists(initial_pop_filename):
             with open(initial_pop_filename, "rb") as fp:
                 source_solutions = pickle.load(fp)
@@ -413,8 +504,8 @@ class NAAS(object):
         
 
         # Get HW&mapping fitness for new pop
-        hw_fitness, map_fitness = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
-        print("First fitness optimal : {:9e}".format(min(hw_fitness)))
+        hw_fitness, map_fitness, _ = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population)
+        print("First fitness optimal : {:9e}".format(max(hw_fitness)))
         logger.debug("\n\n\n\n")
 
         # HW -> Mapping Opt.
@@ -425,7 +516,7 @@ class NAAS(object):
             #if generation == 10: #?
             #        self.best_reward = float("-inf")
             best_gen_reward =None
-            hw_parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents)
+            hw_parents = HWGene.select_parents(hw_new_population, hw_fitness, num_parents, gen=generation)
             map_parents = [[] for lr_i in range(num_layers)]
             for lr_i in range(num_layers):
                 map_parents[lr_i] = MapGene.select_parents(map_new_population[lr_i], map_fitness[lr_i], num_parents)
@@ -443,7 +534,8 @@ class NAAS(object):
                     map_offspring_crossover_sample = MapGene.crossover(map_parents[lr_i],
                                                             num_pop-num_parents)
                     map_offspring_mutation_sample[lr_i] = MapGene.mutation(map_offspring_crossover_sample, rate=0.08)
-                hw_fitness_sample, map_fitness_sample = self.get_fitness(generation, num_pop-num_parents, num_layers, hw_offspring_mutation_sample, map_offspring_mutation_sample)
+                #hw_fitness_sample, map_fitness_sample = self.get_fitness(generation, num_pop-num_parents, num_layers, hw_offspring_mutation_sample, map_offspring_mutation_sample)
+                hw_fitness_sample, map_fitness_sample = [0 for p in range(num_pop)], []
 
                 for p in range(num_pop-num_parents):
                     if hw_fitness_sample[p] > float("-1e14") or True:
@@ -460,7 +552,7 @@ class NAAS(object):
                 map_new_population[lr_i][0:map_parents[0].shape[0], :] = map_parents[lr_i]
                 map_new_population[lr_i][map_parents[0].shape[0]:, :] = map_offspring_mutation[lr_i]
 
-            hw_fitness, map_fitness = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
+            hw_fitness, map_fitness, reward_fit = self.get_fitness(generation, num_pop, num_layers, hw_new_population, map_new_population)
 
             for pop in range(num_pop):
                 reward = hw_fitness[pop]
@@ -468,37 +560,25 @@ class NAAS(object):
                     best_gen_reward = reward
                     self.best_reward = reward
                     self.best_reward_constraint = float("inf") #total_used_constraint/num_layers
-                    self.best_sol = (hw_new_population[pop].copy(), [map_new_population[lr_i][pop].copy() for lr_i in range(num_layers)])
+                    self.best_sol = (hw_new_population[pop].copy(), [map_new_population[lr_i][np.argmax([reward_fit[pop][map_pop][lr_i] for map_pop in range(num_pop)])].copy() for lr_i in range(num_layers)])
                 iteration += 1
                 self.best_rewards_iteration.append(iteration)
                 self.best_rewards_constraint.append(self.best_reward_constraint)
                 self.best_rewards.append(self.best_reward)
+                self.save_chkpt()
             best_tmp_results = self.timeloop_estimator.get_gene_HW_info(self.model_defs[0], self.best_sol[0], self.best_sol[1][0])
-            print("Best sol(Xdim, X, Ydim, Y, group_density, bank): ", best_tmp_results)
+            print("Best sol(Xdim, X, Ydim, Y, Zdim, Z, group_density, bank, buffers, use_sparsity): ", best_tmp_results)
             if best_gen_reward  is not None:
                 logger.debug("\nHW Generation {}: new best award reward: {:9e}".format(generation+1, self.best_reward))
-            self.save_chkpt()
         # == end of HW GA
 
-        self.save_chkpt()
-        logger.debug("Best result total:")
-        logger.debug(self.best_rewards)
-        logger.debug("Constraints of best")
-        logger.debug(self.best_rewards_constraint)
+        total_reward = self.save_chkpt(verbose=True)
+        #logger.debug("Best result total:")
+        #logger.debug(self.best_rewards)
+        #logger.debug("Constraints of best")
+        #logger.debug(self.best_rewards_constraint)
 
-        import shutil
-        outdir = self.outdir #'../../data/best'
-        os.mkdir(outdir) if os.path.exists(outdir) is False else None
-        total_reward = 0
-        print("best reward each layer")
-        for lr_i in range(num_layers):
-            reward, constraint = self.exterior_search(num_gen-1, self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
-            print(reward)
-            total_reward += reward
-            dir_name = outdir+'/{:02d}'.format(lr_i)
-            os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
-            self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
-                                                          dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
+
         print('best reward: ', total_reward)
         print('raw mapping data stored @ {}'.format(dir_name+'/hw_.yaml'))
 
@@ -516,13 +596,28 @@ class NAAS(object):
             "start_range": self.start_range,
             "end_range": self.end_range,
         }
-    def save_chkpt(self, chkpt_file=None):
+    def save_chkpt(self, chkpt_file=None, verbose=False):
         if chkpt_file is None:
             chkpt_file = self.chkpt_file
         chkpt = self.get_chkpt()
         with open(chkpt_file, "wb") as fd:
             pickle.dump(chkpt, fd)
         # print(self.sol)
+        import shutil
+        outdir = self.outdir #'../../data/best'
+        os.mkdir(outdir) if os.path.exists(outdir) is False else None
+        total_reward = 0
+        num_layers = len(self.model_defs)
+        for lr_i in range(num_layers):
+            reward, constraint = self.exterior_search(0, self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
+            if verbose:
+                print(reward)
+            total_reward += reward
+            dir_name = outdir+'/{:02d}'.format(lr_i)
+            os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
+            self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
+                                                          dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
+        return total_reward
 
     def exterior_search(self, gen, layer_info, hw_gene, map_gene, thread_id=None, queue=None):
         if self.fitness == "thrpt_ave" or self.fitness=="thrpt_naive":

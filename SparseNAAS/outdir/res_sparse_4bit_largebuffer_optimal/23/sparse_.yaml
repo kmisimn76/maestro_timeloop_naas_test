@@ -1,0 +1,26 @@
+sparse_optimizations:
+  targets:
+  - action-optimization:
+    - condition-on:
+      - Inputs
+      target: Weights
+      type: skipping
+    - condition-on:
+      - Inputs
+      target: Outputs
+      type: skipping
+    name: L1
+    representation-format:
+      data-spaces:
+      - name: Inputs
+        ranks:
+        - format: UB
+        - format: UB
+        - format: UB
+        - format: UB
+  - action-optimization:
+    - condition-on:
+      - Inputs
+      target: Weights
+      type: skipping
+    name: Buffer

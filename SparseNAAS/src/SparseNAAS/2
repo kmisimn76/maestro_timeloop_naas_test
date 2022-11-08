@@ -1,222 +1,291 @@
 
-import random
+from subprocess import Popen, PIPE
+import yaml
 import numpy as np
+import os
+import math
 
-from enum import IntEnum
-class HW_GENE (IntEnum):
-    L2_SIZE     = 0
-    L1_SIZE     = 1
-    NUM_PE      = 2
-    BW          = 3
-    NUM_DIM     = 4
-    DIM_SIZE_0  = 5
-    DIM_SIZE_1  = 6
-    DIM_SIZE_2  = 7
-    PAR_DIM_K   = 8
-    PAR_DIM_C   = 9
-    PAR_DIM_Y   = 10
-    PAR_DIM_X   = 11
-    PAR_DIM_R   = 12
-    PAR_DIM_S   = 13
-    GROUP_DENSITY= 14
-    BANK        = 15
-    L2_WEIGHT_SIZE     = 16
-    L2_INPUT_SIZE     = 17
-    L2_OUTPUT_SIZE     = 18
-    L1_WEIGHT_SIZE     = 19
-    L1_INPUT_SIZE     = 20
-    L1_OUTPUT_SIZE     = 21
+from HWGene import *
+from MapGene import *
 
+from SparseAccelEstimator.main import HW_DEF, MAPPING_DEF, calculateSparseAccel, checkLegalConstraintSparseAccel, checkFitBufferMappingSparseAccel
 
-## Design Space Constraints
-MAX_PE = 12 #8
-MIN_PE = 10  #8
-SQUARE_SHAPE_PE = False
-WEIGHT_STATIONARY = False
-DISABLE_BANK = False
-DISABLE_GROUP = False
-MIN_BANK = 1
-MAX_GROUP = 4
+df_dict = {1:"dla", 2:"shi", 3:"eye"}
+m_type_dicts = {1:"CONV", 2:"DSCONV"}
 
-class _HWGene(object):
-    def get_sample_gene(self):
-        return [3000, 100, 8, 50, 2, 0.5, 0.5, 0.5, 6,5,4,3,2,1, 1, 4, 10000, 10000, 10000, 0.5, 0.5, 0.5]
-    def generate_random_gene(self):
-        L2Buf = 0
-        L1Buf = 0
-        L2Buf_weight = random.randint(100, 4*128000)
-        L2Buf_input = random.randint(100, 4*128000)
-        L2Buf_output = random.randint(100, 4*128000)
-        L1Buf_weight = random.random()
-        L1Buf_input = random.random()
-        L1Buf_output = random.random()
-        PEs = random.randint(MIN_PE, MAX_PE) # power of 2 #300
-        BW = random.randint(1,1000)
-        NumDim = random.randint(2,2) #FIXME : Hardcoding, Fix NumDim to 2
+############## ----------------------- ###################
+############## ----------------------- ###################
+# SparseAccelEstimatorr Perform Estimation
+############## ----------------------- ###################
+############## ----------------------- ###################
 
-        if SQUARE_SHAPE_PE:
-            DimSize0 = 0.5 #for dense FIXME 0~1 -> to softmax
-            DimSize1 = 0.5 #for dense FIXME 0~1
-            DimSize2 = 0.5 #for dense FIXME 0~1
-        else:
-            DimSize0 = random.random() #0~1 -> to softmax
-            DimSize1 = random.random() #0~1
-            DimSize2 = random.random() #0~1
+class SparseAccelEstimator():
 
-        if WEIGHT_STATIONARY:
-            ParDimK = 6#random.randint(1,6) #for dense
-            ParDimC = 5#random.randint(1,6) #for dense
-            ParDimY = 4#random.randint(1,6) #for dense
-            ParDimX = 3#random.randint(1,6) #for dense
-            ParDimR = 2#random.randint(1,6) #for dense
-            ParDimS = 1#random.randint(1,6) #for dense
-        else:
-            ParDimK = random.randint(1,6)
-            ParDimC = random.randint(1,6)
-            ParDimY = random.randint(1,6)
-            ParDimX = random.randint(1,6)
-            ParDimR = random.randint(1,6)
-            ParDimS = random.randint(1,6)
+    def __init__(self, random_file_name):
+        self.random_file_name = random_file_name
 
-        if DISABLE_BANK:
-            Bank    = 0 # for Dense FIXME
-        else:
-            #Bank    = random.randint(0, 4) # power of 2
-            Bank    = random.randint(MIN_BANK, 4) # power of 2
-        if DISABLE_GROUP:
-            Density = 5 # for Dense FIXME
-        else:
-            #Density = random.randint(0,6) # power of 2
-            Density = random.randint(0,MAX_GROUP) # power of 2
-
-        return [L2Buf, L1Buf, PEs, BW, NumDim,
-                    DimSize0, DimSize1, DimSize2,
-                    ParDimK, ParDimC, ParDimY, ParDimX, ParDimR, ParDimS, Density, Bank,
-                    L2Buf_weight, L2Buf_input, L2Buf_output, L1Buf_weight, L1Buf_input, L1Buf_output]
-
-    #HWGene
-    def select_parents(self, pop, fitness, num_parents):
-        parents = np.empty((num_parents, len(HW_GENE)))
-        for parent_num in range(num_parents):
-            max_fitness_idx = np.where(fitness == np.max(fitness))
-            max_fitness_idx = max_fitness_idx[0][0]
-            parents[parent_num] = pop[max_fitness_idx]
-            fitness[max_fitness_idx] = float("-inf")
-        return parents
-
-    #HWGene
-    def crossover(self, parents, offspring_size):
-        offspring = np.empty((offspring_size, len(HW_GENE)))
-        for k in range(offspring_size):
-            parent1_idx = k%parents.shape[0]
-            parent2_idx = np.random.randint(0, parents.shape[0])
-            for i in range(len(HW_GENE)):
-                offspring[k][i] = parents[parent1_idx][i] if random.randint(0,1)==0 else parents[parent2_idx][i] #crossover 1:1
-        return offspring
-
-    #HWGene
-    def mutation(self, offsprings,rate=0.05):
-        for idx in range(offsprings.shape[0]):
-            rand_list = self.generate_random_gene()
-            for p in range(offsprings.shape[1]):
-                if random.random() < rate:
-                    offsprings[idx][p] = rand_list[p]
-        return offsprings
-
-class DIM (IntEnum):
-    K = 0
-    C = 1
-    Y = 2
-    X = 3
-    R = 4
-    S = 5
-    P = 6
-    def to_str(data):
-        if data==DIM.K: return "K"
-        if data==DIM.C: return "C"
-        if data==DIM.Y: return "Y"
-        if data==DIM.X: return "X"
-        if data==DIM.R: return "R"
-        if data==DIM.S: return "S"
-        if data==DIM.P: return "P"
-        #print(data)
-        raise "Exception"
-    def to_str_timeloop(data):
-        if data==DIM.K: return "M"
-        if data==DIM.C: return "C"
-        if data==DIM.Y: return "Q"
-        if data==DIM.X: return "P"
-        if data==DIM.R: return "R"
-        if data==DIM.S: return "S"
-        if data==DIM.P: return "Z"
-        #print(data)
-        raise "Exception"
-
-class TIMELOOP_HW:
     def softmax(self, a) :
         exp_a = np.exp(a)
         sum_exp_a = np.sum(exp_a)
         y = exp_a / sum_exp_a
         return y
 
-    def __init__(self):
-        self.X = 0
-        self.Y = 0
-        self.XDim = DIM.X
-        self.YDim = DIM.Y
-        self.L2_size = 0
-        self.L1_size = 0
-        self.Density = 0
-        self.Bank = 0
-        self.L2_weight_size = 0
-        self.L2_input_size = 0
-        self.L2_output_size = 0
-        self.L1_weight_size = 0
-        self.L1_input_size = 0
-        self.L1_output_size = 0
-    def set_HW(self,hw_gene):
-        selected_hw_dim = sorted(list(enumerate(hw_gene[HW_GENE.PAR_DIM_K:HW_GENE.PAR_DIM_S+1])), key=lambda x:x[1])[-int(hw_gene[HW_GENE.NUM_DIM]):]
-        sum_dim = hw_gene[HW_GENE.DIM_SIZE_0] + hw_gene[HW_GENE.DIM_SIZE_1]
-        dim_size = [2**(round(hw_gene[HW_GENE.NUM_PE]*(x/sum_dim))) for x in [hw_gene[HW_GENE.DIM_SIZE_0], hw_gene[HW_GENE.DIM_SIZE_1]]] #get dim size from encoding vector
-        x = dim_size[0]
-        y = dim_size[1]
-        xdim = selected_hw_dim[0][0]
-        ydim = selected_hw_dim[1][0]
-        l2_size = hw_gene[HW_GENE.L2_SIZE]
-        l1_size = hw_gene[HW_GENE.L1_SIZE]
-        density = 2**(int(hw_gene[HW_GENE.GROUP_DENSITY] ))
-        bank = 2**int(hw_gene[HW_GENE.BANK])
-        self.dim_size = dim_size
-        self.X = x
-        self.Y = y
-        self.XDim = xdim
-        self.YDim = ydim
-        self.L2_size = l2_size
-        self.L1_size = l1_size
-        self.Density = density
-        self.Bank = bank
-        self.L2_weight_size = hw_gene[HW_GENE.L2_WEIGHT_SIZE]
-        self.L2_input_size = hw_gene[HW_GENE.L2_INPUT_SIZE]
-        self.L2_output_size = hw_gene[HW_GENE.L2_OUTPUT_SIZE]
-        self.L1_weight_size = hw_gene[HW_GENE.L1_WEIGHT_SIZE] * hw_gene[HW_GENE.L2_WEIGHT_SIZE]
-        self.L1_input_size = hw_gene[HW_GENE.L1_INPUT_SIZE] * hw_gene[HW_GENE.L2_INPUT_SIZE]
-        self.L1_output_size = hw_gene[HW_GENE.L1_OUTPUT_SIZE] * hw_gene[HW_GENE.L2_OUTPUT_SIZE]
-    def get_X(self):
-        return self.X
-    def get_Y(self):
-        return self.Y
-    def get_XDim(self):
-        return self.XDim
-    def get_YDim(self):
-        return self.YDim
-    def get_L2_size(self):
-        return self.L2_weight_size, self.L2_input_size, self.L2_output_size
-    def get_L1_size(self):
-        return self.L1_weight_size, self.L1_input_size, self.L1_output_size
-    def get_group_density(self):
-        density = self.Density if (int(hw_gene[HW_GENE.GROUP_DENSITY]) <= 4) else (self.X if (self.XDim==2 or self.XDim==3) else (self.Y if (self.YDim==2 or self.YDim==3) else (self.X if (self.XDim==1) else (s    elf.Y if (self.YDim==1) else 1) ) ) )
-        print(density)
-        return density
-    def get_bank(self):
-        return self.Bank
+    def gene2mapping(self, dimension, hw_gene, map_gene):
+        hw_info = TIMELOOP_HW()
+        mapping = TIMELOOP_MAPPING()
+
+        hw_info.set_HW(hw_gene)
+        mapping.set_mapping_gene(dimension[0:6], hw_info.dim_size, hw_gene, map_gene)
+        return hw_info, mapping
+
+    def checkValidGene(self, hw_info, mapping):
+        # check invalid mapping
+        if hw_info.get_XDim()>=4 or ((hw_info.get_YDim() is not None) and hw_info.get_YDim()>=4) \
+             or ((hw_info.get_ZDim() is not None) and hw_info.get_ZDim()>=4): #except R,S
+            raise Exception('HW Gene: imported RS')
+            return False
+        #if (hw_info.get_XDim()==2 and hw_info.get_YDim()==3) or \
+        #   (hw_info.get_XDim()==3 and hw_info.get_YDim()==2): #except WH PE
+        #    raise Exception('parallel WH')
+        #    return False
+        if 0 not in set([hw_info.get_XDim(), hw_info.get_YDim(), hw_info.get_ZDim()]) \
+            and 1 not in set([hw_info.get_XDim(), hw_info.get_YDim(), hw_info.get_ZDim()]): #if dim doesn't contain neither K(0), C(1)
+            raise Exception('HW Gene: K, C dim exclude')
+            return False
+        if mapping.get_mapping_PE_tile_size().count(1)==6:
+            #print("cannot exploit sparsity")
+            raise Exception('HW Gene: cannot exploit sparsity')
+            return False
+        return True
+
+    def adaptor_timeloop_to_sparseaccel(self,dimension, hw_info,mapping):
+        #define HW paramemter
+        X = hw_info.get_X()
+        XDim = hw_info.get_XDim()
+        Y = hw_info.get_Y()
+        YDim = hw_info.get_YDim()
+        Z = hw_info.get_Z()
+        ZDim = hw_info.get_ZDim()
+
+        #ARRAY_K = X if XDim==DIM.K else (Y if YDim==DIM.K else 1)
+        #ARRAY_C = X if XDim==DIM.C else (Y if YDim==DIM.C else 1)
+        #ARRAY_W = X if XDim==DIM.W else (Y if YDim==DIM.W else 1)
+        #hw_def = HW_DEF(ARRAY_K, ARRAY_C, ARRAY_W, hw_info.get_bank(), hw_info.get_bank())
+        HW_dim = [1, 1, 1, 1]
+        HW_dim[XDim] = X
+        if YDim is not None:
+            HW_dim[YDim] = Y
+        if ZDim is not None:
+            HW_dim[ZDim] = Z
+        hw_def = HW_DEF(HW_dim[0], HW_dim[1], HW_dim[2], HW_dim[3], hw_info.get_bank(), hw_info.get_bank())
+
+        #define Mapping parameter
+        l2_loop_order_map = [-1, -1, -1, -1, -1, -1]
+        l2_loop_order_map[mapping.get_mapping_l2_order()[0]] = 5
+        l2_loop_order_map[mapping.get_mapping_l2_order()[1]] = 4
+        l2_loop_order_map[mapping.get_mapping_l2_order()[2]] = 3
+        l2_loop_order_map[mapping.get_mapping_l2_order()[3]] = 2
+        l2_loop_order_map[mapping.get_mapping_l2_order()[4]] = 1
+        l2_loop_order_map[mapping.get_mapping_l2_order()[5]] = 0
+        l1_loop_order_map = [-1, -1, -1, -1, -1, -1]
+        l1_loop_order_map[mapping.get_mapping_l1_order()[0]] = 5
+        l1_loop_order_map[mapping.get_mapping_l1_order()[1]] = 4
+        l1_loop_order_map[mapping.get_mapping_l1_order()[2]] = 3
+        l1_loop_order_map[mapping.get_mapping_l1_order()[3]] = 2
+        l1_loop_order_map[mapping.get_mapping_l1_order()[4]] = 1
+        l1_loop_order_map[mapping.get_mapping_l1_order()[5]] = 0
+
+        l1_map_size = [mapping.get_mapping_L1_tile_size()[i] for i in range(0,6)]  #dim order
+        PE_map_size = [mapping.get_mapping_PE_tile_size()[i] for i in range(0,6)]  #dim order
+        l1_map_size[hw_info.get_XDim()] *= PE_map_size[hw_info.get_XDim()] #mv invalid PE map size to l1 @ parallel dim
+        PE_map_size[hw_info.get_XDim()] = hw_info.get_X()
+        if YDim is not None:
+            l1_map_size[hw_info.get_YDim()] *= PE_map_size[hw_info.get_YDim()] #mv invalid PE map size to l1 @ parallel dim
+            PE_map_size[hw_info.get_YDim()] = hw_info.get_Y()
+        if ZDim is not None:
+            l1_map_size[hw_info.get_ZDim()] *= PE_map_size[hw_info.get_ZDim()] #mv invalid PE map size to l1 @ parallel dim
+            PE_map_size[hw_info.get_ZDim()] = hw_info.get_Z()
+        sparsity_infofile_map = {"C": [0, 1, 2, 3, 4], "W": [0, 5, 6, 7, 8]}
+        print("1")
+        sparsity_group_index = int(math.log(hw_info.get_group_density(), 2)) # group_density 1,2,4,8,16 -> idx 0,1,2,3,4
+        sparsity_group_type = "W" if hw_dim[2]>1 or hw_dim[3]>1 else "C" #in/output stationary => "W" gruop, weight stationary => "C" group
+        #density = float(dimension[6+sparsity_group_index]) if sparsity_group_index<=4 else 1.0 # density
+        density = float(dimension[6+sparsity_infofile_map[sparsity_gruop_type][sparsity_group_index]]) if (hw_info.get_use_sparsity() and sparsity_group_index<=4) else 1.0 # density
+
+        mapping_def = MAPPING_DEF(
+         mapping.get_mapping_L2_tile_size()[0],mapping.get_mapping_L2_tile_size()[1],mapping.get_mapping_L2_tile_size()[2],mapping.get_mapping_L2_tile_size()[3],mapping.get_mapping_L2_tile_size()[4],mapping.get_mapping_L2_tile_size()[5],
+         l2_loop_order_map[0],l2_loop_order_map[1],l2_loop_order_map[2],l2_loop_order_map[3],l2_loop_order_map[4],l2_loop_order_map[5],
+         l1_map_size[0],l1_map_size[1],l1_map_size[2],l1_map_size[3],l1_map_size[4],l1_map_size[5],
+         l1_loop_order_map[0],l1_loop_order_map[1],l1_loop_order_map[2],l1_loop_order_map[3],l1_loop_order_map[4],l1_loop_order_map[5],
+         PE_map_size[0],PE_map_size[1],PE_map_size[2],PE_map_size[3],PE_map_size[4],PE_map_size[5], density)
+
+        l1_weight, l1_input, l1_output = hw_info.get_L1_size()
+        l2_weight, l2_input, l2_output = hw_info.get_L2_size()
+        buffer_estimated = {'l1_weight': l1_weight,#mapping_def.K_L1 * mapping_def.C_L1 * mapping_def.R_L1 * mapping_def.S_L1,
+                            'l1_input':  l1_input,#mapping_def.C_L1 * mapping_def.H_L1 * mapping_def.W_L1,
+                            'l1_output': l1_output,#mapping_def.K_L1 * mapping_def.H_L1 * mapping_def.W_L1,
+                            'l2_weight': l2_weight,#mapping_def.K_L2 * mapping_def.C_L2 * mapping_def.R_L2 * mapping_def.S_L2,
+                            'l2_input':  l2_input,#mapping_def.C_L2 * mapping_def.H_L2 * mapping_def.W_L2,
+                            'l2_output': l2_output#mapping_def.K_L2 * mapping_def.H_L2 * mapping_def.W_L2
+                            }
+
+        return hw_def, mapping_def, buffer_estimated
+
+    def observe_timeloop(self, gen, dimension, hw_gene, map_gene, judge, target_constraint, thread_id=None, firsttime=False, multi=False):
+
+        if multi==True:
+            if (len(dimension) != len(hw_gene)) or (len(dimension) != len(map_gene)):
+                raise "Invalid Argument"
+            lim = len(dimension)
+            raise 'len must be 1'
+        else:
+            lim = 1
+            dimension = [dimension]
+            hw_gene = [hw_gene]
+            map_gene = [map_gene]
+        if len(dimension[0]) < 8: #6 diemsion + density
+            raise "Model def don't contain density information"
+        result_dir = "./timeloop_result/result_{}/".format('' if thread_id is None else thread_id)
+
+        if lim > 1: raise "lim value is exceeded"
+
+        hw_info, mapping_info = self.gene2mapping(dimension[0], hw_gene[0], map_gene[0])
+
+        # Get timeloop result
+        try:
+            #run sparseaccel estimator
+            hw_def, mapping_def, buffer_estimated = self.adaptor_timeloop_to_sparseaccel(dimension[0], hw_info, mapping_info)
+
+            target_constraint.set_constraint(group_density=hw_info.get_group_density(), bank=hw_info.get_bank())
+            valid_gene_check = self.checkValidGene(hw_info, mapping_info)
+            fpga_constraint_check = target_constraint.check_constraints(buffer_estimated, hw_info, mapping_info, hw_info.get_use_sparsity()) if (target_constraint is not None) else True
+            #sparse_accel_check_mapping = checkLegalConstraintSparseAccel(hw_def, mapping_def)
+            sparse_accel_check_mapping = checkFitBufferMappingSparseAccel(hw_def, mapping_def, buffer_estimated)
+            #if (sparse_accel_check_mapping is False) or (fpga_constraint_check is False) or (valid_gene_check is False): #Check constraint Invalid
+            if (valid_gene_check is False):
+                raise Exception('invalid gene')
+            if (sparse_accel_check_mapping is False): #Check constraint Invalid
+                raise Exception('invalid map')
+            if (fpga_constraint_check is False): #Check constraint Invalid
+                '''
+                if gen>=10: # ignore resource check before fore generation
+                    #print("Gene has out of FPGA resource, then raise error")
+                    raise Exception('invalid map: constraint')
+                else:
+                    #print("Initial adv. although Gene has out of FPGA resource")
+                    pass
+                '''
+                raise Exception('invalid constraint')
+
+            result_cycle = calculateSparseAccel(hw_def, mapping_def)
+
+            #Get metrics(observation)
+            buffer_weight = 0 #timeloop_stat_item_px_buffer[3][2][0][0].text
+            buffer_input = 0 #timeloop_stat_item_px_buffer[3][2][0][1].text
+            buffer_output = 0 #timeloop_stat_item_px_buffer[3][2][0][2].text
+            l1_weight = 0 #timeloop_stat_item_px_l1[3][2][0][0].text
+            l1_input = 0 #timeloop_stat_item_px_l1[3][2][0][1].text
+            l1_output = 0 #timeloop_stat_item_px_l1[3][2][0][2].text
+            l2_weight = 0 #timeloop_stat_item_px_l2[3][2][0][0].text
+            l2_input = 0 #timeloop_stat_item_px_l2[3][2][0][1].text
+            l2_output = 0 #timeloop_stat_item_px_l2[3][2][0][2].text
+            util = 0 #float(f.readline().split(' ')[1])  # utilization
+            runtime = result_cycle #float(f.readline().split(' ')[1])  # cycles
+            energy = 999 #float(f.readline().split(' ')[1])  # energy
+            area = 0 #float(f.readline().split(' ')[1])  # area
+            l2_size = l2_weight + l2_input + l2_output
+            l1_size = l1_weight + l1_input + l1_output
+            mac = 1 #unsupport
+            power = 1 #unsupport
+            observation = [runtime, 1, energy, area, l1_size, l2_size, mac, power]
+            estimated = {'util': util, 'cycle': runtime, 'energy': energy, 'area': area, 'mac': mac, 'power': power,
+                        'buffer_weight': buffer_weight, 'buffer_input': buffer_input, 'buffer_output': buffer_output,
+                        'l1_weight': l1_weight, 'l1_input': l1_input, 'l1_output': l1_output,
+                        'l2_weight': l2_weight, 'l2_input': l2_input, 'l2_output': l2_output }
+
+            if runtime <= 0 or energy <= 0: #Invalid
+                raise Exception('invalid map: runtime')
+
+            return observation, judge(observation), estimated
+        except Exception as e:
+            #raise "compile err?"
+            # Invalid!
+            #print(e)
+            return None, (None, None), None
+
+    def save_timeloop_def(self, dimension, hw_gene, map_gene, hw_file_name, map_file_name, prob_file_name, sparse_file_name):
+        lim = 1
+        dimension = [dimension]
+        hw_gene = [hw_gene]
+        map_gene = [map_gene]
+        if len(dimension[0]) < 8: #6 diemsion + density
+            raise "Model def don't contain density information"
+
+        process = []
+        main_m_file = self.random_file_name
+        for i in range(lim):
+            # Run timeloop
+            m_file = main_m_file+"{}".format(i)
+            try:
+                hw_info, mapping_info = self.gene2mapping(dimension[i], hw_gene[i], map_gene[i])
+            except:
+                # Invalid mapping
+                return None, None, None, None
+            hw_def, mapping_def, buffer_estimated = self.adaptor_timeloop_to_sparseaccel(dimension[i], hw_info, mapping_info)
+            with open(hw_file_name, "w") as file:
+                #HW info
+                file.write(str(hw_def.ARRAY_K)+str(","))
+                file.write(str(hw_def.ARRAY_C)+str(","))
+                file.write(str(hw_def.ARRAY_W)+str(","))
+                file.write(str(hw_info.get_group_density())+str(","))
+                file.write(str(hw_info.get_bank())+str(","))
+                file.write(str(hw_info.get_L2_size()[0])+str(","))
+                file.write(str(hw_info.get_L2_size()[1])+str(","))
+                file.write(str(hw_info.get_L2_size()[2])+str(","))
+                file.write(str(hw_info.get_L1_size()[0])+str(","))
+                file.write(str(hw_info.get_L1_size()[1])+str(","))
+                file.write(str(hw_info.get_L1_size()[2])+str("\n"))
+                file.write(str(hw_info.get_use_sparsity())+str("\n"))
+                #Map info
+                file.write(str(mapping_def.L2_TILENUM_K)+str(","))
+                file.write(str(mapping_def.L2_TILENUM_C)+str(","))
+                file.write(str(mapping_def.L2_TILENUM_H)+str(","))
+                file.write(str(mapping_def.L2_TILENUM_W)+str(","))
+                file.write(str(mapping_def.L2_TILENUM_R)+str(","))
+                file.write(str(mapping_def.L2_TILENUM_S)+str("\n"))
+                file.write(str(mapping_def.L2_ORDER_K)+str(","))
+                file.write(str(mapping_def.L2_ORDER_C)+str(","))
+                file.write(str(mapping_def.L2_ORDER_H)+str(","))
+                file.write(str(mapping_def.L2_ORDER_W)+str(","))
+                file.write(str(mapping_def.L2_ORDER_R)+str(","))
+                file.write(str(mapping_def.L2_ORDER_S)+str("\n"))
+                file.write(str(mapping_def.L1_TILENUM_K)+str(","))
+                file.write(str(mapping_def.L1_TILENUM_C)+str(","))
+                file.write(str(mapping_def.L1_TILENUM_H)+str(","))
+                file.write(str(mapping_def.L1_TILENUM_W)+str(","))
+                file.write(str(mapping_def.L1_TILENUM_R)+str(","))
+                file.write(str(mapping_def.L1_TILENUM_S)+str("\n"))
+                file.write(str(mapping_def.L1_ORDER_K)+str(","))
+                file.write(str(mapping_def.L1_ORDER_C)+str(","))
+                file.write(str(mapping_def.L1_ORDER_H)+str(","))
+                file.write(str(mapping_def.L1_ORDER_W)+str(","))
+                file.write(str(mapping_def.L1_ORDER_R)+str(","))
+                file.write(str(mapping_def.L1_ORDER_S)+str("\n"))
+                file.write(str(mapping_def.TILE_K)+str(","))
+                file.write(str(mapping_def.TILE_C)+str(","))
+                file.write(str(mapping_def.TILE_H)+str(","))
+                file.write(str(mapping_def.TILE_W)+str(","))
+                file.write(str(mapping_def.TILE_R)+str(","))
+                file.write(str(mapping_def.TILE_S)+str("\n"))
+
+    def get_gene_HW_info(self, dimension, hw_gene, map_gene):
+        hw_info, mapping_info = self.gene2mapping(dimension, hw_gene, map_gene)
+        return [DIM.to_str(hw_info.get_XDim()), hw_info.get_X(), \
+                DIM.to_str(hw_info.get_YDim()), hw_info.get_Y(), \
+                DIM.to_str(hw_info.get_ZDim()), hw_info.get_Z(), \
+                hw_info.get_group_density(), hw_info.get_bank(),
+                hw_info.get_L2_size()[0], hw_info.get_L2_size()[1], hw_info.get_L2_size()[2],
+                hw_info.get_L1_size()[0], hw_info.get_L1_size()[1], hw_info.get_L1_size()[2],
+                hw_info.get_use_sparsity()
+                ]
 

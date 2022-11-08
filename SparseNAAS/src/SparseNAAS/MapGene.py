@@ -34,9 +34,12 @@ class MAPPING_GENE (IntEnum):
 ## Design Space Constraints
 
 class _MapGene(object):
-    def get_sample_gene(self):
+    def get_sample_gene(self, seed1=None, seed2=None):
         #return [6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
-        return [6,5,4,3,2,1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 6,5,4,3,2,1, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+        rd1 = random.random()*0.8+0.1 if seed1 is None else seed1
+        rd2 = random.random()*0.8+0.1 if seed2 is None else seed2
+        return [6,5,4,3,2,1, rd1,rd1,rd1,rd1,rd1,rd1, 6,5,4,3,2,1, rd2,rd2,rd2,rd2,rd2,rd2]
+        #return [6,5,4,3,2,1, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 6,5,4,3,2,1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
     def generate_random_gene(self):
         ArrTileSizeK = random.random() #0~1
         ArrTileSizeC = random.random()
@@ -71,12 +74,29 @@ class _MapGene(object):
 
     #MapGene
     def select_parents(self, pop, fitness, num_parents):
+        '''
         parents = np.empty((num_parents, len(MAPPING_GENE)))
         for parent_num in range(num_parents):
             max_fitness_idx = np.where(fitness == np.max(fitness))
             max_fitness_idx = max_fitness_idx[0][0]
             parents[parent_num] = pop[max_fitness_idx]
             fitness[max_fitness_idx] = float("-inf")
+        '''
+        for i in range(len(pop)):
+            for j in range(i+1, len(pop)):
+                if sum([(0 if pop[i][l] == pop[j][l] else 1) for l in range(len(MAPPING_GENE))]) == 0:
+                    fitness[j] = float('-inf')
+
+        parents = np.empty((num_parents, len(MAPPING_GENE)))
+        sortarg = np.array(fitness).argsort()
+        for parent_num in range(num_parents//2):
+            #max_fitness_idx = np.where(fitness == np.max(fitness))
+            #max_fitness_idx = max_fitness_idx[0][0]
+            #parents[parent_num] = pop[max_fitness_idx]
+            #fitness[max_fitness_idx] = float("-inf")
+            parents[parent_num] = pop[sortarg[len(pop)-1-parent_num]]
+        for parent_num in range(num_parents//2, num_parents):
+            parents[parent_num] = pop[sortarg[random.randint(0,len(pop)-1-num_parents//2)]]
         return parents
 
     #MapGene
@@ -92,8 +112,8 @@ class _MapGene(object):
 
     #MapGene
     def mutation(self, offsprings,rate=0.05):
-        rand_list = self.generate_random_gene()
         for idx in range(offsprings.shape[0]):
+            rand_list = self.generate_random_gene()
             for p in range(offsprings.shape[1]):
                 if random.random() < rate:
                     offsprings[idx][p] = rand_list[p]
@@ -107,7 +127,7 @@ class TIMELOOP_MAPPING:
         self.mapping_tile_size = None
         self.mapping_array_order = None
         self.mapping_pe_order = None
-    def set_mapping_gene(self, l_info, dim_sz, hw_gene, gene):
+    def set_mapping_gene(self, l_info, dim_sz, hw_gene, hw_info, gene):
         self.mapping_gene_raw = gene
         self.l_info = l_info
         # order
@@ -129,6 +149,30 @@ class TIMELOOP_MAPPING:
         self.mapping_inner_tile_size[self.mapping_selected_hw_dim[1]] = 1
         self.mapping_inner_tile_size[4] = 1 #R,S PE tile is 1. except
         self.mapping_inner_tile_size[5] = 1 #R,S PE tile is 1. except
+        
+        X = hw_info.get_X()
+        XDim = hw_info.get_XDim()
+        Y = hw_info.get_Y()
+        YDim = hw_info.get_YDim()
+        Z = hw_info.get_Z()
+        ZDim = hw_info.get_ZDim()
+        HW_dim = [1, 1, 1, 1, 1, 1] #K,C,H,W,R,S
+        HW_dim[XDim] = X
+        if YDim is not None:
+            HW_dim[YDim] = Y
+        if ZDim is not None:
+            HW_dim[ZDim] = Z
+        bank_ = hw_info.get_bank()
+        # PE tile is multiple of Bank
+        if HW_dim[2] == 1 and HW_dim[3]==1: #weight stationary
+            self.mapping_inner_tile_size[3] = bank_ * math.ceil(self.mapping_inner_tile_size[3]/bank_) #W bank
+        elif HW_dim[1] == 1: #output stationary
+            self.mapping_inner_tile_size[1] = bank_ * math.ceil(self.mapping_inner_tile_size[1]/bank_) #C bank
+        elif HW_dim[0] == 1: #input stationary
+            self.mapping_inner_tile_size[0] = bank_ * math.ceil(self.mapping_inner_tile_size[0]/bank_) #K bank
+        else:
+            raise Exception("err")
+
         self.l2_tile_size = [int(math.ceil(self.l_info_hw[i]/self.mapping_tile_size[i])) for i in range(0,6)]
         self.l1_tile_size = [int(math.ceil(self.mapping_tile_size[i]/self.mapping_inner_tile_size[i])) for i in range(0,6)]
         self.pe_tile_size = [int(math.ceil(self.mapping_inner_tile_size[i])) for i in range(0,6)]
