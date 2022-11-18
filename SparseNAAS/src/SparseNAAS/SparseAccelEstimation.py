@@ -52,6 +52,33 @@ class SparseAccelEstimator():
             and 1 not in set([hw_info.get_XDim(), hw_info.get_YDim(), hw_info.get_ZDim()]): #if dim doesn't contain neither K(0), C(1)
             raise Exception('HW Gene: K, C dim exclude')
             return False
+        X = hw_info.get_X()
+        XDim = hw_info.get_XDim()
+        Y = hw_info.get_Y()
+        YDim = hw_info.get_YDim()
+        Z = hw_info.get_Z()
+        ZDim = hw_info.get_ZDim()
+
+        HW_dim = [1, 1, 1, 1, 1, 1] #K,C,H,W,R,S
+        HW_dim[XDim] = X
+        if YDim is not None:
+            HW_dim[YDim] = Y
+        if ZDim is not None:
+            HW_dim[ZDim] = Z
+
+        if mapping.get_mapping_L2_tile_size()[4]!=1 or mapping.get_mapping_L2_tile_size()[5]!=1:
+            raise Exception('HW Gene: RS L2 must be 1')
+            return False
+        output_stationary = (HW_dim[1]==1)
+        if output_stationary and mapping.get_mapping_PE_tile_size()[2]!=1:
+            raise Exception('HW Gene: invalid pe size of output stationary')
+            return False
+        if output_stationary and mapping.get_mapping_L2_tile_size()[5]!=1:
+            raise Exception('HW Gene: invalid l2 size of output stationary')
+            return False
+        if output_stationary and HW_dim[2]>1:
+            raise Exception('HW Gene: output stationary be acceptable only KxC')
+            return False
         if mapping.get_mapping_PE_tile_size().count(1)==6:
             #print("cannot exploit sparsity")
             raise Exception('HW Gene: cannot exploit sparsity')

@@ -48,16 +48,19 @@ MIN_PE = 8#10#12 #11 #8
 SQUARE_SHAPE_PE = False
 WEIGHT_STATIONARY = False
 OUTPUT_STATIONARY = False
+USE_SPARSITY = 2#0 #0=random, 1=dense, 2=sparse
+
 DISABLE_BANK = False
 DISABLE_GROUP = False #sparse/dense
 MIN_BANK = 0#1 #sparse/dense
-MAX_GROUP = 3#4 #sparse/dense
+MAX_GROUP = 6#3#6#4 #sparse/dense
 MAX_L2_SIZE = 8*128000#4*8*128000
-USE_SPARSITY = 2#0 #0=random, 1=dense, 2=sparse
 specific_gene = None
 #specific_gene = [3000, 100, 10, 50, 2, 0.6, 0.4, 0.5, 5,6,4,3,2,1, 4, 1, 310167.0,490008.0,460822.0,170699.70811429684/310167.0,37488.6041682779/490008.0,59665.545348994056/460822.0, 1]
 #specific_gene = [3000, 100, 10, 50, 2, 0.6, 0.4, 0.5, 5,6,4,3,2,1, 4, 1, 310167.0/2,490008.0,460822.0,170699.70811429684/310167.0,37488.6041682779/490008.0,59665.545348994056/460822.0, 1]
 #specific_gene = [3000, 100, 10, 50, 2, 0.6, 0.4, 0.5, 5,4,3,6,2,1, 4, 2, 384726.0,180530.0,80689.0,77220.32072257111/384726.0,129800.6326891591/180530.0,54683.2319325427/80689.0, 0]
+#specific_gene = [3000, 100, 10, 50, 2, 0.5, 0.5, 0.5, 5,4,3,6,2,1, 2, 1, 219928.0,183399.0,150548.0,33623.339297894214/219928.0,135077.02740795567/183399.0,126948.65197363592/150548.0, 1]
+
 
 
 class _HWGene(object):
@@ -96,8 +99,8 @@ class _HWGene(object):
             ParDimR = 2#random.randint(1,6) #for dense
             ParDimS = 1#random.randint(1,6) #for dense
         elif OUTPUT_STATIONARY:
-            ParDimK = 6#random.randint(1,6) #for dense
-            ParDimX = 5#random.randint(1,6) #for dense
+            ParDimK = 5#random.randint(1,6) #for dense
+            ParDimX = 6#random.randint(1,6) #for dense
             ParDimY = 4#random.randint(1,6) #for dense
             ParDimC = 3#random.randint(1,6) #for dense
             ParDimR = 2#random.randint(1,6) #for dense

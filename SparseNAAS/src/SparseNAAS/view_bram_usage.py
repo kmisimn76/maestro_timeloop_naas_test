@@ -16,7 +16,7 @@ if int(float(hw_data[1]))==1: #output stationary
     bank_out = bk * int(float(hw_data[2])) if int(float(hw_data[2])) != 1 else int(float(hw_data[3])) #out-> W
 elif int(float(hw_data[2]))==1 and int(float(hw_data[3]))==1: #wt stationary
     bk = int(float(hw_data[5]))
-    bank_wt  = bk * int(float(hw_data[1])) #wt -> C
+    bank_wt  = int(float(hw_data[1])) #wt -> C
     bank_in  = bk * int(float(hw_data[1])) #in -> C
     bank_out = bk * int(float(hw_data[0])) #out-> K
 import math

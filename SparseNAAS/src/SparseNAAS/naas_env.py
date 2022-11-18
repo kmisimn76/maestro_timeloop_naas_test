@@ -264,16 +264,17 @@ class NAAS(object):
         while invalid_count > (1+num_layers)*num_pop//10: # 90% pop must satify constraint
             hw_fitness, map_fitness, _ = self.get_fitness(0, num_pop, num_layers, hw_new_population, map_new_population, verbose=False)
             invalid_count = 0
+            '''
             for i in range(num_pop):
                 if hw_fitness[i] is None or hw_fitness[i] <= float("-1e14"):
                     invalid_count += 1
                     hw_new_population[i] = HWGene.generate_random_gene()
+            '''
             for j in range(num_pop):
                 for l in range(num_layers):
                     if map_fitness[l][j] is None or map_fitness[l][j] <= float("-1e14"):
                         invalid_count += 1
                         map_new_population[l][j] = MapGene.generate_random_gene()
-
             pbar.n = num_pop*(1+num_layers) - invalid_count
             pbar.refresh()
             if num_pop*(1+num_layers) - invalid_count == 0:
@@ -612,11 +613,13 @@ class NAAS(object):
             reward, constraint = self.exterior_search(0, self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i])
             if verbose:
                 print(reward)
-            total_reward += reward
-            dir_name = outdir+'/{:02d}'.format(lr_i)
-            os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
-            self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
-                                                          dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
+                total_reward += reward
+            else:
+                total_reward += reward
+                dir_name = outdir+'/{:02d}'.format(lr_i)
+                os.mkdir(dir_name) if os.path.exists(dir_name) is False else None
+                self.timeloop_estimator.save_timeloop_def(self.model_defs[lr_i], self.best_sol[0], self.best_sol[1][lr_i], 
+                                                              dir_name+'/hw_.yaml', dir_name+'/mapping_.yaml', dir_name+'/problem_.yaml', dir_name+'/sparse_.yaml')
         return total_reward
 
     def exterior_search(self, gen, layer_info, hw_gene, map_gene, thread_id=None, queue=None):
