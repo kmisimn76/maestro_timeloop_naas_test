@@ -1,7 +1,7 @@
 architecture:
   version: 0.3
-  bank: 4
-  group_density: 4
+  #bank: 4
+  #group_density: 4
   subtree:
   - name: system
     local:
@@ -11,8 +11,8 @@ architecture:
           width: 8
           block-size: 1
           word-bits: 8 #output also is INT8
-          read_bandwidth: 6
-          write_bandwidth: 0.9
+          read_bandwidth: 64
+          write_bandwidth: 16
     subtree:
       - name: SIMD
         attributes:

@@ -428,6 +428,27 @@ class NAAS(object):
             print("- HW fitness info(min, max, mean, var, # valid): ", "{:2e} {:2e} {:2e} {:2e} {}".format(min(hw_valid_fitness), max(hw_valid_fitness), hw_valid_fitness.mean(), hw_valid_fitness.var()**0.5, np.sum(hw_fitness != float("-inf"))))
             print("- Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
 
+        with open("design_points.txt", "a") as f:
+            for i in range(num_pop):
+                optmappings = []
+                opthw = []
+                optimal = 0
+                hw_gene = hw_new_population[i]
+                opthw = [g for g in hw_gene]
+                for l in range(num_layers):
+                    optmapping = None
+                    optfit = float("-inf")
+                    for j in range(num_pop):
+                        map_gene = map_new_population[l][j]
+                        if optfit <= reward[i][j][l]:
+                            optmapping = [g for g in map_gene]
+                            optfit = reward[i][j][l]
+                    optmappings.append(optmapping)
+                    optimal += optfit
+                if optimal != None and optimal >= float("-1e14"):
+                    outstr = [str(optimal)] + [(",".join([str(d) for d in opthw]))] + [",".join([str(d) for d in optm]) for optm in optmappings]
+                    f.write(",".join(outstr)+"\n")
+
         return hw_fitness, map_fitness, reward
 
 

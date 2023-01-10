@@ -96,8 +96,11 @@ class SparseloopEstimator():
         weight_bandwidth = (hw_map[DIM.C] if INPUT_STATIONARY  else hw_map[DIM.K]) * (1 if WEIGHT_STATIONARY else bank)
         output_bandwidth = (hw_map[DIM.K] if WEIGHT_STATIONARY else max(hw_map[DIM.W],hw_map[DIM.H])) * (1 if OUTPUT_STATIONARY else bank)
 
-        data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth
-        data_L2['attributes']['write_bandwidth'] = output_bandwidth
+        #print(input_bandwidth,weight_bandwidth,output_bandwidth)
+        #data_L2['attributes']['read_bandwidth'] = (input_bandwidth + weight_bandwidth)
+        #data_L2['attributes']['write_bandwidth'] = (output_bandwidth)
+        data_L2['attributes']['read_bandwidth'] = input_bandwidth + weight_bandwidth + output_bandwidth
+        data_L2['attributes']['write_bandwidth'] = input_bandwidth + weight_bandwidth + output_bandwidth
 
         '''
         burst_size = 4096
@@ -128,7 +131,7 @@ class SparseloopEstimator():
         data_DRAM['attributes']['read_bandwidth'] = dram_input_bw + dram_weight_bw
         data_DRAM['attributes']['write_bandwidth'] = dram_output_bw
         '''
-        raise "need to copy code from TimeloopEstimator.py"
+        #raise "need to copy code from TimeloopEstimator.py"
 
         with open(file_name, "w") as f:
             yaml.dump(data, f)
@@ -157,6 +160,8 @@ class SparseloopEstimator():
         data['problem']['instance']['R'] = int(dim_size_[4])
         data['problem']['instance']['S'] = int(dim_size_[5])
         sparsity_group_index = int(math.log(hw_info.get_group_density(), 2)) # group_density 1,2,4,8,16 -> idx 0,1,2,3,4
+        #print(dimension)
+        #print(sparsity_group_index+6)
         data['problem']['instance']['densities']['Inputs']['density'] = float(dimension[6+sparsity_group_index]) # density
 
         with open(file_name, "w") as f:
@@ -164,10 +169,10 @@ class SparseloopEstimator():
         return file_name
 
     def write_timeloop_mapping(self, dimension, hw_info, mapping_info, filename_=None, layer_id=0):
-        if len(dimension) > 11:
-            m_type = m_type_dicts[int(dimension[-1])]
-        else:
-            m_type = "CONV"
+        #if len(dimension) > 11:
+        #    m_type = m_type_dicts[int(dimension[-1])]
+        #else:
+        #    m_type = "CONV"
         # Dataflow description
         file_name = self.result_yaml_map if filename_ is None else filename_
         example_file_name = self.example_yaml_map
@@ -409,3 +414,189 @@ class SparseloopEstimator():
                 DIM.to_str(hw_info.get_YDim()), hw_info.get_Y(), \
                 hw_info.get_group_density(), hw_info.get_bank()]
 
+
+    def observe_timeloop_from_layer_info(self, gen, dimension, hw_info, mapping_info, info_id):
+        if True:
+            lim = 1
+            dimension = [dimension]
+        if len(dimension[0]) < 8: #6 diemsion + density
+            raise Exception("Model def don't contain density information")
+        result_dir = "./timeloop_result/result_{}/".format('' if info_id is None else info_id)
+
+        process = []
+        main_m_file = self.random_file_name
+        for i in range(lim):
+            # Run timeloop
+            m_file = main_m_file+"{}".format(i)
+            try:
+                hw_info, mapping_info = hw_info, mapping_info
+            except Exception as e:
+                # Invalid mapping
+                print(e)
+                raise Exception("err")
+                return None, (None, None), None
+            hw_file_name = self.write_timeloop_hw(dimension[i], hw_info, mapping_info, filename_=None if info_id is None else self.result_yaml_hw+str(info_id))
+            map_file_name = self.write_timeloop_mapping(dimension[i], hw_info, mapping_info, filename_=None if info_id is None else self.result_yaml_map+str(info_id))
+            prob_file_name = self.write_timeloop_problem(dimension[i], hw_info, mapping_info, filename_=None if info_id is None else self.result_yaml_prob+str(info_id))
+            sparse_file_name = self.write_timeloop_sparseopt(dimension[i], hw_info, mapping_info, filename_=None if info_id is None else self.result_yaml_sparseopt+str(info_id))
+            os.remove(result_dir+"timeloop-model.map+stats.xml") if os.path.exists(result_dir+"timeloop-model.map+stats.xml") else None
+            os.makedirs(result_dir) if os.path.exists(result_dir) is False else None
+            command = ["../../../timeloop/build/timeloop-model",
+                    hw_file_name,
+                    prob_file_name,
+                    map_file_name,
+                    sparse_file_name,
+                    "-o", result_dir]
+            process.append(Popen(command, stdout=PIPE, stderr=PIPE))
+        for i in range(lim):
+            stdout, stderr = process[i].communicate()
+            if stderr != b'':
+                print("Output: \n", stdout.decode('ascii'))
+                print("Error Code: \n", stderr.decode('ascii'))
+                raise "Timeloop/MAESTRO compile error"
+                # Invalid mapping
+                return None, (None, None), None
+            process[i].wait()
+
+        # Get timeloop result
+        try:
+            import xml.etree.ElementTree as elemTree
+            timeloop_stat = elemTree.parse(result_dir+'timeloop-model.map+stats.xml').getroot()
+            timeloop_stat_item_px_macc = timeloop_stat[0][0][0][2][0]
+            timeloop_stat_item_px_buffer = timeloop_stat[0][0][0][3][0]
+            timeloop_stat_item_px_l1 = timeloop_stat[0][0][0][4][0]
+            timeloop_stat_item_px_l2 = timeloop_stat[0][0][0][5][0]
+            timeloop_stat_item_px_dram = timeloop_stat[0][0][0][6][0]
+            if timeloop_stat_item_px_buffer[2][0][0].text!='Buffer' or timeloop_stat_item_px_l1[2][0][0].text!='L1' \
+                     or timeloop_stat_item_px_l2[2][0][0].text!='L2' or timeloop_stat_item_px_dram[2][0][0].text!='DRAM':
+                print("timeloop output error ???")
+                raise "timeloop output error"
+            f = open(result_dir+"timeloop-model.stats.txt", "r")
+            while True:
+                line = f.readline()
+                if not line: break
+                if "Summary Stats" in line: break
+                # print(line)
+            f.readline()  # ----
+
+            #Get metrics(observation)
+            buffer_weight = timeloop_stat_item_px_buffer[3][2][0][0].text
+            buffer_input = timeloop_stat_item_px_buffer[3][2][0][1].text
+            buffer_output = timeloop_stat_item_px_buffer[3][2][0][2].text
+            l1_weight = timeloop_stat_item_px_l1[3][2][0][0].text
+            l1_input = timeloop_stat_item_px_l1[3][2][0][1].text
+            l1_output = timeloop_stat_item_px_l1[3][2][0][2].text
+            l2_weight = timeloop_stat_item_px_l2[3][2][0][0].text
+            l2_input = timeloop_stat_item_px_l2[3][2][0][1].text
+            l2_output = timeloop_stat_item_px_l2[3][2][0][2].text
+            util = float(f.readline().split(' ')[1])  # utilization
+            runtime = float(f.readline().split(' ')[1])  # cycles
+            energy = float(f.readline().split(' ')[1])  # energy
+            area = float(f.readline().split(' ')[1])  # area
+            l2_size = l2_weight + l2_input + l2_output
+            l1_size = l1_weight + l1_input + l1_output
+            mac = 1 #unsupport
+            power = 1 #unsupport
+            observation = [runtime, 1, energy, area, l1_size, l2_size, mac, power]
+            estimated = {'util': util, 'cycle': runtime, 'energy': energy, 'area': area, 'mac': mac, 'power': power,
+                        'buffer_weight': buffer_weight, 'buffer_input': buffer_input, 'buffer_output': buffer_output,
+                        'l1_weight': l1_weight, 'l1_input': l1_input, 'l1_output': l1_output,
+                        'l2_weight': l2_weight, 'l2_input': l2_input, 'l2_output': l2_output }
+
+            #os.remove(result_dir+"timeloop-model.map+stats.xml")  if os.path.exists(result_dir+"timeloop-model.map+stats.xml") else None
+            #os.remove(result_dir+"timeloop-model.map.txt")  if os.path.exists(result_dir+"timeloop-model.map.txt") else None
+            #os.remove(result_dir+"timeloop-model.stats.txt")  if os.path.exists(result_dir+"timeloop-model.stats.txt") else None
+            #hw_info, mapping_info = self.gene2mapping(dimension[0], hw_gene[0], map_gene[0]) #lim must be 1
+            if runtime <= 0 or energy <= 0: #Invalid
+                raise Exception('invalid map: runtime')
+            return observation, observation, estimated
+        except Exception as e:
+            # Invalid!
+            print(e)
+            raise "compile err?"
+            #return None, (None, None), None
+
+if __name__=="__main__":
+    estimator = SparseloopEstimator("0")
+    import sys
+    print(sys.argv)
+    #K,C,H,W,R,S,den = 64, 64, 224, 224, 3, 3, 0.5
+    #dimension = [K,C,H,W,R,S,den,den,den,den,den,den,den,den,den,den,den,den,den]
+    for l in range(53):
+        def adaptor():
+            file_path = sys.argv[1] if len(sys.argv)>1 else "../../../SparseNAAS/outdir/resnet_new_opt"
+            f = open("{}/{:02d}/hw_.yaml".format(file_path, l), "r")
+            data = [dt for dt in f.readline().split(',')]
+            #print(data)
+
+            hw_dim = [[0,int(float(data[0]))], [1,int(float(data[1]))], [2,int(float(data[2]))], [3,int(float(data[3]))], [4,1], [5,1]]
+            hw_dim.sort(key=lambda x:x[1])
+            
+
+            hw_info = TIMELOOP_HW()
+            mapping_info = TIMELOOP_MAPPING()
+            from HWGene import _HWGene
+            from MapGene import _MapGene
+            hwg = _HWGene()
+            hw_gene = hwg.generate_random_gene()
+            hw_info.set_HW(hw_gene)
+            hw_info.num_dim = 2
+            hw_info.X = hw_dim[-1][1]
+            hw_info.Y = hw_dim[-2][1]
+            hw_info.XDim = hw_dim[-1][0]
+            hw_info.YDim = hw_dim[-2][0]
+            hw_info.L2_weight_size = float(data[6])
+            hw_info.L2_input_size = float(data[7])
+            hw_info.L2_output_size = float(data[8])
+            hw_info.L1_weight_size = float(data[9])
+            hw_info.L1_input_size = float(data[10])
+            hw_info.L1_output_size = float(data[11])
+            hw_info.Bank = float(data[5])
+            hw_info.density = float(data[4])
+            hw_info.use_sparsity = bool(data[12])
+            hw_info.dim_size = [hw_info.X, hw_info.Y, hw_info.Z]
+
+            d = []
+            for i in range(5):
+                d += [int(float(dt)) for dt in f.readline().split(',')]
+
+            #print(d[0:6])
+            #print(d[12:18])
+            #print(d[24:30])
+            K, C, H, W, R, S = [a*b*c for (a,b,c) in zip(d[0:6],d[12:18],d[24:30])]
+            dimension = [K,C,H,W,R,S, float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13]), float(data[13])]
+
+            mapg = _MapGene()
+            #print(hw_info.dim_size)
+            map_gene = mapg.generate_random_gene()
+            mapping_info.set_mapping_gene(dimension[0:10], hw_info.dim_size, hw_gene, hw_info, map_gene)
+            mapping_info.mapping_selected_hw_dim = [hw_info.XDim, hw_info.YDim]
+            mapping_info.l2_tile_size = d[0:6]
+            mapping_info.l1_tile_size = d[12:18]
+            mapping_info.pe_tile_size = [d[24+i] if (hw_info.XDim!=i and hw_info.YDim!=i) else 1 for i in range(6)]
+            #print(mapping_info.get_mapping_parallel_size())
+            #print(mapping_info.pe_tile_size)
+            #print(d[6:12])
+            #print(sorted(list(zip(list(range(6)), d[6:12])),key=lambda x:x[1]))
+            aa = [i[0] for i in sorted(list(zip(list(range(6)), d[6:12])),key=lambda x:x[1])]
+            bb = [i[0] for i in sorted(list(zip(list(range(6)), d[18:24])),key=lambda x:x[1])]
+            #aa.reverse()
+            #bb.reverse()
+            #print(aa, bb)
+            #mapping_info.mapping_array_order = [5-i for i in d[6:12]]
+            #mapping_info.mapping_pe_order = [5-i for i in d[18:24]]
+            #mapping_info.mapping_array_order = [i for i in d[6:12]]
+            #mapping_info.mapping_pe_order = [i for i in d[18:24]]
+            mapping_info.mapping_array_order = aa
+            mapping_info.mapping_pe_order = bb
+
+            # check invalid mapping
+            return hw_info, mapping_info, dimension
+
+        hw_info, mapping_info, dimension = adaptor()
+        info_id = 0
+        observation, _, estimated = estimator.observe_timeloop_from_layer_info(0, dimension, hw_info, mapping_info, info_id)
+        #print(estimator)
+        #print("Cycle: ", estimated['cycle'])
+        print(estimated['cycle'])
+        #input()

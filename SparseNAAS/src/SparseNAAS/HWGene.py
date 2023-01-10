@@ -47,8 +47,8 @@ MAX_PE = 10#12#14 #12 #8
 MIN_PE = 8#10#12 #11 #8
 SQUARE_SHAPE_PE = False
 WEIGHT_STATIONARY = False
-OUTPUT_STATIONARY = False
-USE_SPARSITY = 2#0 #0=random, 1=dense, 2=sparse
+OUTPUT_STATIONARY = True#False
+USE_SPARSITY = 0#0 #0=random, 1=dense, 2=sparse
 
 DISABLE_BANK = False
 DISABLE_GROUP = False #sparse/dense
@@ -227,8 +227,8 @@ class DIM (IntEnum):
     def to_str_timeloop(data):
         if data==DIM.K: return "M"
         if data==DIM.C: return "C"
-        if data==DIM.H: return "Q"
-        if data==DIM.W: return "P"
+        if data==DIM.H: return "P"
+        if data==DIM.W: return "Q"
         if data==DIM.R: return "R"
         if data==DIM.S: return "S"
         if data==DIM.P: return "Z"

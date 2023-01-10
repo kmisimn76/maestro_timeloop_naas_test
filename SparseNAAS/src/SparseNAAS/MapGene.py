@@ -189,6 +189,7 @@ class TIMELOOP_MAPPING:
         output = [1 for i in range(0,6)]
         output[self.mapping_selected_hw_dim[0]] = int(self.dim_size[0])
         output[self.mapping_selected_hw_dim[1]] = int(self.dim_size[1])
+        #output[self.mapping_selected_hw_dim[2]] = int(self.dim_size[2])
         return output
     def get_mapping_l2_order(self):
         return [self.mapping_array_order[i] for i in range(0,6)]

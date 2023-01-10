@@ -1,14 +1,14 @@
 problem:
   instance:
-    C: 32
+    C: 512
     Hdilation: 1
     Hstride: 1
-    M: 64
+    M: 512
     N: 1
-    P: 224
-    Q: 224
-    R: 7
-    S: 7
+    P: 14
+    Q: 14
+    R: 3
+    S: 3
     Wdilation: 1
     Wstride: 1
     densities:

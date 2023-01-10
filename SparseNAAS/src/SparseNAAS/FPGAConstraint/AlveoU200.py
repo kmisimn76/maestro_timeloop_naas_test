@@ -9,7 +9,10 @@ class Constraint_AlveoU200_Sparse:
     #def __init__(self, BRAM_max_size=140, threshold_use_LUTRAM=2000, DSP_max_size=256, group_density=4, bank=4):
     #def __init__(self, BRAM_max_size=700//2, URAM_max_size=320//2, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
     #def __init__(self, BRAM_max_size=700, URAM_max_size=300, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
-    def __init__(self, BRAM_max_size=800, URAM_max_size=280, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
+    #def __init__(self, BRAM_max_size=800, URAM_max_size=280, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
+    #def __init__(self, BRAM_max_size=1440, URAM_max_size=640, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
+    #def __init__(self, BRAM_max_size=2000, URAM_max_size=840, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
+    def __init__(self, BRAM_max_size=200000000, URAM_max_size=840000000, threshold_use_LUTRAM=0, DSP_max_size=8196, group_density=4, bank=4): #BRAM : (MAX DSP / (32x32=1024 PE)) * MAX MEM ~= 1400 BRAM
         self.BRAM_max_size = BRAM_max_size # constraint for frequency performance
         self.URAM_max_size = URAM_max_size
         self.DSP_max_size = DSP_max_size # constraint for freq. performance
