@@ -49,9 +49,9 @@ architecture:
                   metadata_datawidth: 4       # metadata's datawidth (can be different from datawidth)
                   #word-bits: 32
             subtree:
-              - name: PErow[0..15]
+              - name: PErow[0..31]
                 subtree:
-                  - name: PE[0..15]
+                  - name: PE[0..31]
                     local:
                       - name: Buffer
                         class: regfile

@@ -194,24 +194,6 @@ class NAAS(object):
             return False
         return True
 
-    def init_population_worker(self, lock, hw_pop_pool, num_pop, num_layers):
-        while len(hw_pop_pool) < num_pop:
-            fit = float("-inf")
-            last_pop = HWGene.generate_random_gene()
-            last_cnt = 0
-            while fit < float("-1e14"):
-                hw_new_pop = HWGene.generate_random_gene()
-                hw_fitness, map_fitness, _ = self.get_fitness(0, 1, num_layers, [hw_new_pop], [[MapGene.generate_random_gene()] for _ in range(num_layers)], verbose=False)
-                last_cnt = last_cnt+1 if (sum([0 if last_pop[i]==hw_new_pop[i] else 1 for i in range(len(hw_new_pop))]) == 0) else 0
-                last_pop = hw_new_pop
-                if max(map_fitness) > float("-1e14") or (last_cnt > 5):
-                    break
-            print("!")
-            lock.acquire()
-            hw_pop_pool.append(hw_new_pop)
-            lock.release()
-
-
     def init_population(self, num_pop, num_layers):
         # Allocate&Initialize VALID population
         hw_new_population = np.empty((num_pop,len(HW_GENE)),dtype=float) # allocation
@@ -286,6 +268,26 @@ class NAAS(object):
 
         return hw_new_population, map_new_population
 
+    def init_population_worker(self, lock, hw_pop_pool, num_pop, num_layers):
+        while len(hw_pop_pool) < num_pop:
+            fit = float("-inf")
+            last_pop = HWGene.generate_random_gene()
+            last_cnt = 0
+            while fit < float("-1e14"):
+                hw_new_pop = HWGene.generate_random_gene()
+                hw_fitness, map_fitness, _ = self.get_fitness(0, 1, num_layers, [hw_new_pop], [[MapGene.generate_random_gene()] for _ in range(num_layers)], verbose=False)
+                last_cnt = last_cnt+1 if (sum([0 if last_pop[i]==hw_new_pop[i] else 1 for i in range(len(hw_new_pop))]) == 0) else 0
+                last_pop = hw_new_pop
+                if max(map_fitness) > float("-1e14") or (last_cnt > 5):
+                    break
+            print("!")
+            lock.acquire()
+            hw_pop_pool.append(hw_new_pop)
+            lock.release()
+
+
+
+    # DEPRECATED!!
     def get_fitness_(self, gen, num_pop, num_layers, hw_new_population, map_new_population):
         # get HW/Mapping fitness
         hw_fitness = np.empty(num_pop, float)
@@ -346,20 +348,6 @@ class NAAS(object):
         print("Invalid rate: {:.2f}%({}/{})".format(invalid_count/num_pop*100, invalid_count, num_pop))
         return hw_fitness, map_fitness
 
-
-    def get_fitness_proc(self, gen, num_pop, num_layers, hw_new_population, map_new_population, n, num_hw_pop, reward, constraint, return_dict, pbar,verbose=True):
-        for i in range(n*num_hw_pop, min(num_pop, (n+1)*num_hw_pop)):
-            for j in range(num_pop):
-                for l in range(num_layers):
-                    hw_gene = hw_new_population[i]
-                    map_gene = map_new_population[l][j]
-                    reward_, constraint_ = self.exterior_search(gen, self.model_defs[l], hw_gene, map_gene)
-                    if reward_ is None: reward_ = float("-inf")
-                    reward[i][j][l] = reward_
-                    constraint[i][j][l] = constraint_
-                    if verbose and n==0:
-                        pbar.update(math.ceil(num_pop/num_hw_pop))
-        return_dict[n] = (reward, constraint)
 
     def get_fitness(self, gen, num_pop, num_layers, hw_new_population, map_new_population, specific_layer=None, verbose=True):
         # get HW/Mapping fitness
@@ -450,6 +438,21 @@ class NAAS(object):
                     f.write(",".join(outstr)+"\n")
 
         return hw_fitness, map_fitness, reward
+
+    def get_fitness_proc(self, gen, num_pop, num_layers, hw_new_population, map_new_population, n, num_hw_pop, reward, constraint, return_dict, pbar,verbose=True):
+        for i in range(n*num_hw_pop, min(num_pop, (n+1)*num_hw_pop)):
+            for j in range(num_pop):
+                for l in range(num_layers):
+                    hw_gene = hw_new_population[i]
+                    map_gene = map_new_population[l][j]
+                    reward_, constraint_ = self.exterior_search(gen, self.model_defs[l], hw_gene, map_gene)
+                    if reward_ is None: reward_ = float("-inf")
+                    reward[i][j][l] = reward_
+                    constraint[i][j][l] = constraint_
+                    if verbose and n==0:
+                        pbar.update(math.ceil(num_pop/num_hw_pop))
+        return_dict[n] = (reward, constraint)
+
 
 
 

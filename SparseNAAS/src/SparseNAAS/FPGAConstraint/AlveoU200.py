@@ -54,57 +54,6 @@ class Constraint_AlveoU200_Sparse:
         self.L2out_byte = out_scale / scale
         self.L2out_levg = 1#2 # double buffering, ..
             
-    def __compute_BRAM_usage(self, L1wt, L1in, L1out, L2wt, L2in, L2out, log_=False):
-        bram_usage = []
-        uram_usage = []
-        if log_:
-            print("data_size\tparts\tdata/bank\t\tbits\tdatabit/part\tbram/part\t\tTot")
-        for required, bank, byte, levg in zip([L1wt, L1in, L1out, L2wt, L2in, L2out],
-                                              [self.L1wt_bank, self.L1in_bank, self.L1out_bank, self.L2wt_bank, self.L2in_bank, self.L2out_bank],
-                                              [self.L1wt_byte, self.L1in_byte, self.L1out_byte, self.L2wt_byte, self.L2in_byte, self.L2out_byte],
-                                              [self.L1wt_levg, self.L1in_levg, self.L1out_levg, self.L2wt_levg, self.L2in_levg, self.L2out_levg]):
-            required, bank, byte, levg = float(required), float(bank), float(byte), float(levg)
-            # july style
-            '''
-            if bank==0 or levg==0: continue
-            data_size = required
-            parts = bank
-            data_per_part = data_size / parts
-            bits = byte*8
-            databit_per_part = data_per_part * bits
-            bram_per_part = math.ceil(databit_per_part * self.bram_per_bit)
-            total_bram = (parts * bram_per_part) * levg
-            if log_:
-                print("{}\t{}\t{}\t\t{}\t{}\t{}\t\t{}".format(data_size,parts,data_per_part,bits,databit_per_part, bram_per_part,total_bram))
-            bram_usage.append(total_bram)
-            '''
-            # september style
-            '''
-             FIXME! L2*_levg must be modified for double buffering
-            if bank==0 or levg==0: continue
-            total_bram = math.ceil( (required*(byte*8)*self.bram_per_bit) / bank ) * bank * levg
-            if required*levg < self.threshold_use_LUTRAM:
-                total_bram = 0
-            bram_usage.append(total_bram)
-            '''
-            # november style - considering uram, considering RAM depth
-            bram_depth = self.bram_depth_choices['32bit' if byte==4 else ('16bit' if byte==2 else ('8bit' if byte==1 else ('4bit' if byte==0.5 else '1bit')))]
-            uram_depth = self.uram_depth_choices['always']
-            total_bram = 2 * bank * levg * math.ceil( math.ceil(required/bank) / bram_depth) if bank != 0 else 0
-            total_uram = 2 * bank * levg * math.ceil( math.ceil(required/bank) / uram_depth) if bank != 0 else 0
-            if required*levg < self.threshold_use_LUTRAM:
-                total_bram = 0
-                total_uram = 0
-            bram_usage.append(total_bram)
-            uram_usage.append(total_uram)
-        return bram_usage, uram_usage
-        #if log_:
-        #    print(used_bram, used_uram)
-        #return used_bram, used_uram, selected_ram_type
-
-    def __compute_DSP_usage(self, Xdim, Ydim):
-        return Xdim * Ydim
-
     def set_constraint(self, BRAM_max_size=-1, DSP_max_size=-1, group_density=-1, bank=-1):
         self.BRAM_max_size = BRAM_max_size if BRAM_max_size != -1 else self.BRAM_max_size
         self.DSP_max_size = DSP_max_size if DSP_max_size != -1 else self.DSP_max_size
@@ -265,6 +214,59 @@ class Constraint_AlveoU200_Sparse:
         if used_dsp > self.DSP_max_size: #Invalid
             return False
         return True #Valid
+
+    def __compute_BRAM_usage(self, L1wt, L1in, L1out, L2wt, L2in, L2out, log_=False):
+        bram_usage = []
+        uram_usage = []
+        if log_:
+            print("data_size\tparts\tdata/bank\t\tbits\tdatabit/part\tbram/part\t\tTot")
+        for required, bank, byte, levg in zip([L1wt, L1in, L1out, L2wt, L2in, L2out],
+                                              [self.L1wt_bank, self.L1in_bank, self.L1out_bank, self.L2wt_bank, self.L2in_bank, self.L2out_bank],
+                                              [self.L1wt_byte, self.L1in_byte, self.L1out_byte, self.L2wt_byte, self.L2in_byte, self.L2out_byte],
+                                              [self.L1wt_levg, self.L1in_levg, self.L1out_levg, self.L2wt_levg, self.L2in_levg, self.L2out_levg]):
+            required, bank, byte, levg = float(required), float(bank), float(byte), float(levg)
+            # july style
+            '''
+            if bank==0 or levg==0: continue
+            data_size = required
+            parts = bank
+            data_per_part = data_size / parts
+            bits = byte*8
+            databit_per_part = data_per_part * bits
+            bram_per_part = math.ceil(databit_per_part * self.bram_per_bit)
+            total_bram = (parts * bram_per_part) * levg
+            if log_:
+                print("{}\t{}\t{}\t\t{}\t{}\t{}\t\t{}".format(data_size,parts,data_per_part,bits,databit_per_part, bram_per_part,total_bram))
+            bram_usage.append(total_bram)
+            '''
+            # september style
+            '''
+             FIXME! L2*_levg must be modified for double buffering
+            if bank==0 or levg==0: continue
+            total_bram = math.ceil( (required*(byte*8)*self.bram_per_bit) / bank ) * bank * levg
+            if required*levg < self.threshold_use_LUTRAM:
+                total_bram = 0
+            bram_usage.append(total_bram)
+            '''
+            # november style - considering uram, considering RAM depth
+            bram_depth = self.bram_depth_choices['32bit' if byte==4 else ('16bit' if byte==2 else ('8bit' if byte==1 else ('4bit' if byte==0.5 else '1bit')))]
+            uram_depth = self.uram_depth_choices['always']
+            total_bram = 2 * bank * levg * math.ceil( math.ceil(required/bank) / bram_depth) if bank != 0 else 0
+            total_uram = 2 * bank * levg * math.ceil( math.ceil(required/bank) / uram_depth) if bank != 0 else 0
+            if required*levg < self.threshold_use_LUTRAM:
+                total_bram = 0
+                total_uram = 0
+            bram_usage.append(total_bram)
+            uram_usage.append(total_uram)
+        return bram_usage, uram_usage
+        #if log_:
+        #    print(used_bram, used_uram)
+        #return used_bram, used_uram, selected_ram_type
+
+    def __compute_DSP_usage(self, Xdim, Ydim):
+        return Xdim * Ydim
+
+
 
 if __name__ == "__main__":
     from TimeloopMapping import *

@@ -4,10 +4,10 @@ import numpy as np
 
 from enum import IntEnum
 class HW_GENE (IntEnum):
-    L2_SIZE     = 0
-    L1_SIZE     = 1
+    L2_SIZE     = 0 #deprecated
+    L1_SIZE     = 1 #deprecated
     NUM_PE      = 2
-    BW          = 3
+    BW          = 3 #deprecated
     NUM_DIM     = 4
     DIM_SIZE_0  = 5
     DIM_SIZE_1  = 6
@@ -43,8 +43,8 @@ MAX_GROUP = 4#6#4 #sparse/dense
 MAX_L2_SIZE = 64000#4*8*128000
 '''
 
-MAX_PE = 10#12#14 #12 #8
-MIN_PE = 8#10#12 #11 #8
+MAX_PE = 10#12#14 #12 #8 #Exponential of 2
+MIN_PE = 8#10#12 #11 #8 #Exponential of 2
 SQUARE_SHAPE_PE = False
 WEIGHT_STATIONARY = False
 OUTPUT_STATIONARY = True#False
@@ -52,9 +52,9 @@ USE_SPARSITY = 0#0 #0=random, 1=dense, 2=sparse
 
 DISABLE_BANK = False
 DISABLE_GROUP = False #sparse/dense
-MIN_BANK = 0#1 #sparse/dense
-MAX_GROUP = 6#3#6#4 #sparse/dense
-MAX_L2_SIZE = 8*128000#4*8*128000
+MIN_BANK = 0#1 #sparse/dense #Exponential of 2
+MAX_GROUP = 6#3#6#4 #sparse/dense #Exponential of 2
+MAX_L2_SIZE = 8*128000#4*8*128000 # # of Elements
 specific_gene = None
 #specific_gene = [3000, 100, 10, 50, 2, 0.6, 0.4, 0.5, 5,6,4,3,2,1, 4, 1, 310167.0,490008.0,460822.0,170699.70811429684/310167.0,37488.6041682779/490008.0,59665.545348994056/460822.0, 1]
 #specific_gene = [3000, 100, 10, 50, 2, 0.6, 0.4, 0.5, 5,6,4,3,2,1, 4, 1, 310167.0/2,490008.0,460822.0,170699.70811429684/310167.0,37488.6041682779/490008.0,59665.545348994056/460822.0, 1]
@@ -71,7 +71,7 @@ class _HWGene(object):
             return [g for g in specific_gene]
         L2Buf = random.random()
         L1Buf = random.random()
-        L2Buf_weight = random.randint(100, MAX_L2_SIZE)
+        L2Buf_weight = random.randint(100, MAX_L2_SIZE) # # of Elements
         L2Buf_input = random.randint(100, MAX_L2_SIZE)
         L2Buf_output = random.randint(100, MAX_L2_SIZE)
         L1Buf_weight = random.random()
@@ -161,7 +161,7 @@ class _HWGene(object):
                     pop[i][18] == pop[j][18] and \
                     pop[i][19] == pop[j][19] and \
                     pop[i][20] == pop[j][20] and \
-                    pop[i][21] == pop[j][21] :
+                    pop[i][21] == pop[j][21] : #중복 gene 제거
                     fitness[j] = float('-inf')
         for i in range(len(pop)): # search more sparser
             dead = False

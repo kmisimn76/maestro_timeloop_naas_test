@@ -1,0 +1,265 @@
+Sparse optimization configuration complete.
+Utilization = 0.58 | pJ/Algorithmic-Compute =   24.066 | pJ/Compute =   24.066
+Cycles: 8429568
+['./run_sparse.sh'] 1
+[64.0, 64.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.06 | pJ/Algorithmic-Compute =   27.204 | pJ/Compute =   27.204
+Cycles: 223005
+['./run_sparse.sh'] 2
+[64.0, 64.0, 56.0, 56.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.51 | pJ/Algorithmic-Compute =   10.508 | pJ/Compute =   10.508
+Cycles: 223005
+['./run_sparse.sh'] 3
+[256.0, 64.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.06 | pJ/Algorithmic-Compute =   23.485 | pJ/Compute =   23.485
+Cycles: 892018
+['./run_sparse.sh'] 4
+[256.0, 64.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.06 | pJ/Algorithmic-Compute =   23.485 | pJ/Compute =   23.485
+Cycles: 892018
+['./run_sparse.sh'] 5
+[64.0, 256.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   20.912 | pJ/Compute =   20.912
+Cycles: 223005
+['./run_sparse.sh'] 6
+[64.0, 64.0, 56.0, 56.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.51 | pJ/Algorithmic-Compute =   10.508 | pJ/Compute =   10.508
+Cycles: 223005
+['./run_sparse.sh'] 7
+[256.0, 64.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.06 | pJ/Algorithmic-Compute =   23.485 | pJ/Compute =   23.485
+Cycles: 892018
+['./run_sparse.sh'] 8
+[64.0, 256.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   20.912 | pJ/Compute =   20.912
+Cycles: 223005
+['./run_sparse.sh'] 9
+[64.0, 64.0, 56.0, 56.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.51 | pJ/Algorithmic-Compute =   10.508 | pJ/Compute =   10.508
+Cycles: 223005
+['./run_sparse.sh'] 10
+[256.0, 64.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.06 | pJ/Algorithmic-Compute =   23.485 | pJ/Compute =   23.485
+Cycles: 892018
+['./run_sparse.sh'] 11
+[128.0, 256.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   18.432 | pJ/Compute =   18.432
+Cycles: 446009
+['./run_sparse.sh'] 12
+[128.0, 128.0, 28.0, 28.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.031 | pJ/Compute =   10.031
+Cycles: 112896
+['./run_sparse.sh'] 13
+[512.0, 256.0, 56.0, 56.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   16.572 | pJ/Compute =   16.572
+Cycles: 1784036
+['./run_sparse.sh'] 14
+[512.0, 128.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.11 | pJ/Algorithmic-Compute =   18.974 | pJ/Compute =   18.974
+Cycles: 446009
+['./run_sparse.sh'] 15
+[128.0, 512.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.45 | pJ/Algorithmic-Compute =   17.687 | pJ/Compute =   17.687
+Cycles: 111503
+['./run_sparse.sh'] 16
+[128.0, 128.0, 28.0, 28.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.031 | pJ/Compute =   10.031
+Cycles: 112896
+['./run_sparse.sh'] 17
+[512.0, 128.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.11 | pJ/Algorithmic-Compute =   18.974 | pJ/Compute =   18.974
+Cycles: 446009
+['./run_sparse.sh'] 18
+[128.0, 512.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.45 | pJ/Algorithmic-Compute =   17.687 | pJ/Compute =   17.687
+Cycles: 111503
+['./run_sparse.sh'] 19
+[128.0, 128.0, 28.0, 28.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.031 | pJ/Compute =   10.031
+Cycles: 112896
+['./run_sparse.sh'] 20
+[512.0, 128.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.11 | pJ/Algorithmic-Compute =   18.974 | pJ/Compute =   18.974
+Cycles: 446009
+['./run_sparse.sh'] 21
+[128.0, 512.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.45 | pJ/Algorithmic-Compute =   17.687 | pJ/Compute =   17.687
+Cycles: 111503
+['./run_sparse.sh'] 22
+[128.0, 128.0, 28.0, 28.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.031 | pJ/Compute =   10.031
+Cycles: 112896
+['./run_sparse.sh'] 23
+[512.0, 128.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.11 | pJ/Algorithmic-Compute =   18.974 | pJ/Compute =   18.974
+Cycles: 446009
+['./run_sparse.sh'] 24
+[256.0, 512.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.45 | pJ/Algorithmic-Compute =   16.447 | pJ/Compute =   16.447
+Cycles: 223005
+['./run_sparse.sh'] 25
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 26
+[1024.0, 512.0, 28.0, 28.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.45 | pJ/Algorithmic-Compute =   15.827 | pJ/Compute =   15.827
+Cycles: 892018
+['./run_sparse.sh'] 27
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 28
+[256.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.65 | pJ/Algorithmic-Compute =   17.599 | pJ/Compute =   17.599
+Cycles: 77142
+['./run_sparse.sh'] 29
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 30
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 31
+[256.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.65 | pJ/Algorithmic-Compute =   17.599 | pJ/Compute =   17.599
+Cycles: 77142
+['./run_sparse.sh'] 32
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 33
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 34
+[256.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.65 | pJ/Algorithmic-Compute =   17.599 | pJ/Compute =   17.599
+Cycles: 77142
+['./run_sparse.sh'] 35
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 36
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 37
+[256.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.65 | pJ/Algorithmic-Compute =   17.599 | pJ/Compute =   17.599
+Cycles: 77142
+['./run_sparse.sh'] 38
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 39
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 40
+[256.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.65 | pJ/Algorithmic-Compute =   17.599 | pJ/Compute =   17.599
+Cycles: 77142
+['./run_sparse.sh'] 41
+[256.0, 256.0, 14.0, 14.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 1.00 | pJ/Algorithmic-Compute =   10.855 | pJ/Compute =   10.855
+Cycles: 112896
+['./run_sparse.sh'] 42
+[1024.0, 256.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.22 | pJ/Algorithmic-Compute =   17.781 | pJ/Compute =   17.781
+Cycles: 223005
+['./run_sparse.sh'] 43
+[512.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.83 | pJ/Algorithmic-Compute =   16.980 | pJ/Compute =   16.980
+Cycles: 120832
+['./run_sparse.sh'] 44
+[512.0, 512.0, 7.0, 7.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   19.288 | pJ/Compute =   19.288
+Cycles: 400128
+['./run_sparse.sh'] 45
+[2048.0, 1024.0, 14.0, 14.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.83 | pJ/Algorithmic-Compute =   16.980 | pJ/Compute =   16.980
+Cycles: 483328
+['./run_sparse.sh'] 46
+[2048.0, 512.0, 7.0, 7.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   24.813 | pJ/Compute =   24.813
+Cycles: 178944
+['./run_sparse.sh'] 47
+[512.0, 2048.0, 7.0, 7.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.26 | pJ/Algorithmic-Compute =   25.185 | pJ/Compute =   25.185
+Cycles: 191488
+['./run_sparse.sh'] 48
+[512.0, 512.0, 7.0, 7.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   19.288 | pJ/Compute =   19.288
+Cycles: 400128
+['./run_sparse.sh'] 49
+[2048.0, 512.0, 7.0, 7.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   24.813 | pJ/Compute =   24.813
+Cycles: 178944
+['./run_sparse.sh'] 50
+[512.0, 2048.0, 7.0, 7.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.26 | pJ/Algorithmic-Compute =   25.185 | pJ/Compute =   25.185
+Cycles: 191488
+['./run_sparse.sh'] 51
+[512.0, 512.0, 7.0, 7.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   19.288 | pJ/Compute =   19.288
+Cycles: 400128
+['./run_sparse.sh'] 52
+[2048.0, 512.0, 7.0, 7.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+Sparse optimization configuration complete.
+Utilization = 0.28 | pJ/Algorithmic-Compute =   24.813 | pJ/Compute =   24.813
+Cycles: 178944
+['./run_sparse.sh'] 53
+

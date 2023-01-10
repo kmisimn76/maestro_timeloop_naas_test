@@ -4,7 +4,9 @@ from subprocess import Popen, PIPE
 
 prob_info = []
 import csv
-with open('prob/resnet50_sparse.csv', newline='') as csvfile:
+#filename = 'prob/resnet50_sparse.csv'
+filename = 'prob/resnet50_dense.csv'
+with open(filename, newline='') as csvfile:
     spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
     for row in spamreader:
         prob_info.append(row)
@@ -17,9 +19,12 @@ def save_prob(result_yaml_prob, example_yaml_prob, layer_info):
     with open(example_file_name, "r") as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
 
+    ARRAY_C = 32 #16 #constant
+
     C = int(layer_info[1])
-    tile_c = 16 if C/16>=16 else (8 if C/16>=8 else (4 if C/16>=4 else (2 if C/16>=2 else 1)))
-    C = tile_c*16 if C<tile_c*16 else C
+    #tile_c = 16 if C/ARRAY_C>=16 else (8 if C/ARRAY_C>=8 else (4 if C/ARRAY_C>=4 else (2 if C/ARRAY_C>=2 else 1)))
+    tile_c = 1#16 if C/ARRAY_C>=16 else (8 if C/ARRAY_C>=8 else (4 if C/ARRAY_C>=4 else (2 if C/ARRAY_C>=2 else 1)))
+    C = tile_c*ARRAY_C if C<tile_c*ARRAY_C else C
     data['problem']['instance']['M'] = int(layer_info[0])
     data['problem']['instance']['C'] = C #int(layer_info[1])
     data['problem']['instance']['P'] = int(layer_info[2])
@@ -44,28 +49,27 @@ def save_map(result_yaml_map, example_yaml_map, layer_info):
     mapping_data_L1_spat = mapping_data['mapping'][3]
     mapping_data_Buf = mapping_data['mapping'][4]
     
+    ARRAY_K = 32 #16 #constant
+    ARRAY_C = 32 #16 #constant
 
     K = layer_info[0]
     C = layer_info[1]
-    tile_c = 16 if C/16>=16 else (8 if C/16>=8 else (4 if C/16>=4 else (2 if C/16>=2 else 1)))
-    C = tile_c*16 if C<tile_c*16 else C
+    tile_c = 1#16 if C/ARRAY_C>=16 else (8 if C/ARRAY_C>=8 else (4 if C/ARRAY_C>=4 else (2 if C/ARRAY_C>=2 else 1)))
+    C = tile_c*ARRAY_C if C<tile_c*ARRAY_C else C
     H = layer_info[2]
     W = layer_info[3]
     R = layer_info[4]
     S = layer_info[5]
 
-    ARRAY_K = 16 #constant
-    ARRAY_C = 16 #constant
-
     TILESIZE_W = 14 if W>=14 else 7
     TILESIZE_H = 14 if H>=14 else 7
 
-    #L1_TILENUM_K = 16 if K/16>=16 else (8 if K/16>=8 else (4 if K/16>=4 else (2 if K/16>=2 else 1)))
-    #L1_TILENUM_C = 16 if C/16>=16 else (8 if C/16>=8 else (4 if C/16>=4 else (2 if C/16>=2 else 1)))
+    L1_TILENUM_K = 16 if K/ARRAY_K>=16 else (8 if K/ARRAY_K>=8 else (4 if K/ARRAY_K>=4 else (2 if K/ARRAY_K>=2 else 1)))
+    L1_TILENUM_C = 16 if C/ARRAY_C>=16 else (8 if C/ARRAY_C>=8 else (4 if C/ARRAY_C>=4 else (2 if C/ARRAY_C>=2 else 1)))
     #L1_TILENUM_H = 8 if H/TILESIZE_H>=8 else (4 if H/TILESIZE_H>=4 else (2 if H/TILESIZE_H>=2 else 1))
     #L1_TILENUM_W = 8 if W/TILESIZE_W>=8 else (4 if W/TILESIZE_W>=4 else (2 if W/TILESIZE_W>=2 else 1))
-    L1_TILENUM_K = 4 if K/16>=4 else (2 if K/16>=2 else 1)
-    L1_TILENUM_C = 4 if C/16>=4 else (2 if C/16>=2 else 1)
+    #L1_TILENUM_K = 4 if K/ARRAY_K>=4 else (2 if K/ARRAY_K>=2 else 1)
+    #L1_TILENUM_C = 4 if C/ARRAY_C>=4 else (2 if C/ARRAY_C>=2 else 1)
     L1_TILENUM_H = 1
     L1_TILENUM_W = 1
     L1_TILENUM_R = 3 if R==3 else 1

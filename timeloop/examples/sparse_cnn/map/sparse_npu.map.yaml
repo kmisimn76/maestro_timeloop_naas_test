@@ -13,7 +13,7 @@ mapping:
     permutation: SRQPCMN
   - target: L1
     type: spatial
-    factors: C=16 M=16 R=1 S=1 N=1 P=1 Q=1
+    factors: C=32 M=32 R=1 S=1 N=1 P=1 Q=1
     permutation: SRQPCMN
   - target: Buffer
     type: temporal
